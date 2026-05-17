@@ -1,14 +1,26 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { Header } from '@/components/layout/header'
+import { Footer } from '@/components/layout/footer'
+import { MobileNav } from '@/components/layout/mobile-nav'
+import { CartProvider } from '@/lib/contexts/cart-context'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({ 
+  subsets: ["latin"],
+  variable: "--font-geist"
+})
+
+const geistMono = Geist_Mono({ 
+  subsets: ["latin"],
+  variable: "--font-geist-mono"
+})
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'ShopSaaS - Discover Local Shops in Nepal',
+  description: 'Discover and shop from local businesses in Nepal. Browse groceries, fashion, electronics, handicrafts, and more from trusted local vendors.',
+  keywords: ['Nepal', 'local shops', 'online shopping', 'Kathmandu', 'delivery', 'groceries', 'fashion', 'handicrafts'],
   generator: 'v0.app',
   icons: {
     icon: [
@@ -29,15 +41,32 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  themeColor: '#E07B39',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
-        {children}
+        <CartProvider>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1 pb-16 md:pb-0">
+              {children}
+            </main>
+            <Footer />
+            <MobileNav />
+          </div>
+        </CartProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
