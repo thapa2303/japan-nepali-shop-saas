@@ -39,8 +39,8 @@ export function ShopGrid({ shops, compact = false }: ShopGridProps) {
         ? "grid-cols-1"
         : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
     }`}>
-      {shops.map((shop) => (
-        <ShopCard key={shop.id} shop={shop} compact={compact} />
+      {shops.map((shop, index) => (
+        <ShopCard key={shop.id} shop={shop} compact={compact} priority={index < 3} />
       ))}
     </div>
   )

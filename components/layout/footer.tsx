@@ -67,7 +67,7 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Shop</h3>
             <ul className="space-y-3">
               {footerLinks.shop.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -84,7 +84,7 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Support</h3>
             <ul className="space-y-3">
               {footerLinks.support.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -101,7 +101,7 @@ export function Footer() {
             <h3 className="font-semibold mb-4">For Business</h3>
             <ul className="space-y-3">
               {footerLinks.business.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -142,7 +142,7 @@ export function Footer() {
           <div className="flex items-center gap-4">
             {footerLinks.legal.map((link) => (
               <Link
-                key={link.href}
+                key={link.label}
                 href={link.href}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >

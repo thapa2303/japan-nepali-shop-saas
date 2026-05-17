@@ -27,7 +27,7 @@ export function FeaturedShops() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {featuredShops.map((shop) => (
+          {featuredShops.map((shop, index) => (
             <Link key={shop.id} href={`/shops/${shop.slug}`}>
               <Card className="group h-full overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
                 <div className="relative aspect-[16/10] overflow-hidden">
@@ -36,6 +36,7 @@ export function FeaturedShops() {
                     alt={shop.name}
                     fill
                     className="object-cover transition-transform group-hover:scale-105"
+                    priority={index < 2}
                   />
                   {shop.isOpen ? (
                     <Badge className="absolute top-3 left-3 bg-green-600 hover:bg-green-600">

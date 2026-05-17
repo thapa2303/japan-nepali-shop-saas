@@ -8,9 +8,10 @@ import type { Shop } from "@/lib/types"
 interface ShopCardProps {
   shop: Shop
   compact?: boolean
+  priority?: boolean
 }
 
-export function ShopCard({ shop, compact = false }: ShopCardProps) {
+export function ShopCard({ shop, compact = false, priority = false }: ShopCardProps) {
   if (compact) {
     return (
       <Link href={`/shops/${shop.slug}`}>
@@ -62,6 +63,7 @@ export function ShopCard({ shop, compact = false }: ShopCardProps) {
             alt={shop.name}
             fill
             className="object-cover transition-transform group-hover:scale-105"
+            priority={priority}
           />
           {shop.isOpen ? (
             <Badge className="absolute top-3 left-3 bg-green-600 hover:bg-green-600">
