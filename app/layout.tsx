@@ -2,10 +2,9 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
-import { MobileNav } from '@/components/layout/mobile-nav'
+import { SiteChrome } from '@/components/layout/site-chrome'
 import { CartProvider } from '@/lib/contexts/cart-context'
+import { Toaster } from '@/components/ui/toaster'
 
 const geist = Geist({ 
   subsets: ["latin"],
@@ -58,15 +57,9 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
         <CartProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1 pb-16 md:pb-0">
-              {children}
-            </main>
-            <Footer />
-            <MobileNav />
-          </div>
+          <SiteChrome>{children}</SiteChrome>
         </CartProvider>
+        <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

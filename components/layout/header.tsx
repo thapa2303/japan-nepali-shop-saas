@@ -57,7 +57,14 @@ export function Header() {
         {/* Right Side Actions */}
         <div className="flex items-center gap-2">
           <CartIcon />
-          
+
+          <Button asChild variant="outline" size="sm" className="hidden md:flex">
+            <Link href="/dashboard">
+              <Store className="h-4 w-4" />
+              Merchant
+            </Link>
+          </Button>
+
           <Button variant="ghost" size="icon" className="hidden md:flex">
             <User className="h-5 w-5" />
             <span className="sr-only">Account</span>
@@ -91,7 +98,13 @@ export function Header() {
                   ))}
                 </nav>
 
-                <div className="border-t pt-4">
+                <div className="border-t pt-4 flex flex-col gap-3">
+                  <Button asChild variant="outline" className="w-full justify-start gap-3">
+                    <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                      <Store className="h-5 w-5" />
+                      Merchant Dashboard
+                    </Link>
+                  </Button>
                   <Button variant="outline" className="w-full justify-start gap-3">
                     <User className="h-5 w-5" />
                     Sign In / Register

@@ -172,3 +172,58 @@ export interface Order {
 }
 
 export type OrderStatus = "pending" | "confirmed" | "preparing" | "out-for-delivery" | "delivered" | "cancelled"
+
+// ---------- Merchant Dashboard types ----------
+
+export interface DashboardOrderItem {
+  productId: string
+  name: string
+  quantity: number
+  price: number
+  variant?: string
+}
+
+export interface DashboardOrder {
+  id: string
+  shopId: string
+  customerName: string
+  customerPhone: string
+  deliveryAddress: string
+  items: DashboardOrderItem[]
+  subtotal: number
+  deliveryFee: number
+  total: number
+  status: OrderStatus
+  paymentMethod: PaymentMethod
+  createdAt: string
+}
+
+export type SubscriptionTier = "starter" | "growth" | "premium"
+
+export interface SubscriptionPlan {
+  tier: SubscriptionTier
+  name: string
+  monthlyPrice: number
+  productLimit: number
+  commissionRate: number
+  features: string[]
+  highlighted?: boolean
+}
+
+export type InvoiceStatus = "paid" | "pending" | "failed"
+
+export interface Invoice {
+  id: string
+  date: string
+  amount: number
+  status: InvoiceStatus
+  plan: string
+}
+
+export interface MerchantSubscription {
+  shopId: string
+  tier: SubscriptionTier
+  status: "active" | "trialing" | "past-due"
+  currentPeriodEnd: string
+  invoices: Invoice[]
+}
