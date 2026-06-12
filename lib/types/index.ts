@@ -83,6 +83,10 @@ export interface Product {
   compareAtPrice?: number
   images: string[]
   category: string
+  // Slug of the platform "Browse by Category" this product rolls up into
+  browseCategory?: string
+  // Merchant's own display grouping name within their store
+  storeCategory?: string
   inStock: boolean
   stockCount?: number
   unit?: string
@@ -123,8 +127,9 @@ export interface Category {
   id: string
   name: string
   nameNepali: string
-  slug: ShopCategory
+  slug: string
   icon: string
+  image: string
   description: string
   shopCount: number
 }

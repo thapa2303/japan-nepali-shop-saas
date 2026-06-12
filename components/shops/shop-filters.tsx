@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { categories } from "@/lib/mock-data/categories"
+import { useCategories } from "@/lib/contexts/category-context"
 import { prefectures } from "@/lib/mock-data/locations"
 import type { ShopCategory, ShopFeature } from "@/lib/types"
 
@@ -44,6 +44,7 @@ interface ShopFiltersProps {
 
 export function ShopFilters({ totalCount }: ShopFiltersProps) {
   const router = useRouter()
+  const { categories } = useCategories()
   const searchParams = useSearchParams()
 
   const selectedCategory = searchParams.get("category") as ShopCategory | null

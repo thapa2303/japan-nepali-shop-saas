@@ -1,32 +1,12 @@
-import Link from "next/link"
-import {
-  ShoppingBasket,
-  Shirt,
-  Smartphone,
-  Home,
-  Heart,
-  BookOpen,
-  Dumbbell,
-  UtensilsCrossed,
-  Palette,
-  Gem,
-} from "lucide-react"
-import { categories } from "@/lib/mock-data/categories"
+"use client"
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  ShoppingBasket,
-  Shirt,
-  Smartphone,
-  Home,
-  Heart,
-  BookOpen,
-  Dumbbell,
-  UtensilsCrossed,
-  Palette,
-  Gem,
-}
+import Link from "next/link"
+import Image from "next/image"
+import { useCategories } from "@/lib/contexts/category-context"
 
 export function CategoriesGrid() {
+  const { categories } = useCategories()
+
   return (
     <section className="py-12 md:py-16">
       <div className="container px-4">
@@ -46,27 +26,29 @@ export function CategoriesGrid() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {categories.map((category) => {
-            const IconComponent = iconMap[category.icon] || ShoppingBasket
-            
-            return (
-              <Link
-                key={category.id}
-                href={`/shops?category=${category.slug}`}
-                className="group relative flex flex-col items-center gap-3 rounded-xl border bg-card p-4 text-center transition-all hover:border-primary hover:shadow-md"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <IconComponent className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-sm">{category.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {category.shopCount} shops
-                  </p>
-                </div>
-              </Link>
-            )
-          })}
+          {categories.map((category) => (
+            <Link
+              key={category.id}
+              href={`/shops?category=${category.slug}`}
+              className="group relative flex flex-col overflow-hidden rounded-xl border bg-card text-center transition-all hover:border-primary hover:shadow-md"
+            >
+              <div className="relative aspect-square w-full overflow-hidden bg-muted">
+                <Image
+                  src={category.image || "/placeholder.svg?height=240&width=240"}
+                  alt={category.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                />
+              </div>
+              <div className="p-3">
+                <h3 className="font-medium text-sm leading-tight">{category.name}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {category.shopCount} shops
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
 
         <Link

@@ -29,6 +29,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -39,6 +46,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { useCategories } from "@/lib/contexts/category-context"
 import { formatYen } from "@/lib/dashboard-utils"
 import { toast } from "@/hooks/use-toast"
 
@@ -54,6 +62,7 @@ interface FormState {
   description: string
   price: string
   compareAtPrice: string
+  browseCategory: string
   category: string
   unit: string
   stockCount: string
@@ -66,6 +75,7 @@ const emptyForm: FormState = {
   description: "",
   price: "",
   compareAtPrice: "",
+  browseCategory: "",
   category: "",
   unit: "",
   stockCount: "",
@@ -75,6 +85,7 @@ const emptyForm: FormState = {
 const LOW_STOCK_THRESHOLD = 50
 
 export function ProductManager({ initialProducts, shopId, productLimit }: ProductManagerProps) {
+  const { categories } = useCategories()
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [query, setQuery] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -102,7 +113,8 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
       description: product.description,
       price: String(product.price),
       compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",
-      category: product.category,
+      browseCategory: product.browseCategory ?? "",
+      category: product.storeCategory ?? product.category,
       unit: product.unit ?? "",
       stockCount: product.stockCount !== undefined ? String(product.stockCount) : "",
       inStock: product.inStock,
@@ -115,6 +127,16 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
       toast({ title: "Missing details", description: "Name and price are required.", variant: "destructive" })
       return
     }
+    if (!form.browseCategory) {
+      toast({
+        title: "Browse category required",
+        description: "Select which platform category this product belongs to.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const storeCategory = form.category.trim() || "general"
 
     if (editing) {
       setProducts((prev) =>
@@ -127,7 +149,9 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
                 description: form.description,
                 price: Number(form.price),
                 compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : undefined,
-                category: form.category,
+                browseCategory: form.browseCategory,
+                storeCategory,
+                category: storeCategory,
                 unit: form.unit || undefined,
                 stockCount: form.stockCount ? Number(form.stockCount) : undefined,
                 inStock: form.inStock,
@@ -154,7 +178,9 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
         price: Number(form.price),
         compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : undefined,
         images: ["/placeholder.svg?height=400&width=400"],
-        category: form.category || "general",
+        browseCategory: form.browseCategory,
+        storeCategory,
+        category: storeCategory,
         inStock: form.inStock,
         stockCount: form.stockCount ? Number(form.stockCount) : undefined,
         unit: form.unit || undefined,
@@ -238,9 +264,16 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <Badge variant="secondary" className="capitalize">
-                          {product.category}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          {product.browseCategory ? (
+                            <Badge variant="outline" className="w-fit capitalize">
+                              {product.browseCategory.replace("-", " ")}
+                            </Badge>
+                          ) : null}
+                          <span className="text-xs capitalize text-muted-foreground">
+                            {product.storeCategory ?? product.category}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         {formatYen(product.price)}
@@ -351,14 +384,35 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
                 />
               </div>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="browseCategory">Browse category *</Label>
+              <Select
+                value={form.browseCategory}
+                onValueChange={(value) => setForm((f) => ({ ...f, browseCategory: value }))}
+              >
+                <SelectTrigger id="browseCategory">
+                  <SelectValue placeholder="Select a platform category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.slug}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                The platform category this product is listed under in Browse by Category.
+              </p>
+            </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Your store category</Label>
                 <Input
                   id="category"
                   value={form.category}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  placeholder="rice"
+                  placeholder="e.g., Rice & Grains"
                 />
               </div>
               <div className="grid gap-2">

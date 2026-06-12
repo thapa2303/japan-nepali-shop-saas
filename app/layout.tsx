@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { SiteChrome } from '@/components/layout/site-chrome'
 import { CartProvider } from '@/lib/contexts/cart-context'
+import { CategoryProvider } from '@/lib/contexts/category-context'
 import { Toaster } from '@/components/ui/toaster'
 
 const geist = Geist({ 
@@ -56,9 +57,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
-        <CartProvider>
-          <SiteChrome>{children}</SiteChrome>
-        </CartProvider>
+        <CategoryProvider>
+          <CartProvider>
+            <SiteChrome>{children}</SiteChrome>
+          </CartProvider>
+        </CategoryProvider>
         <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
