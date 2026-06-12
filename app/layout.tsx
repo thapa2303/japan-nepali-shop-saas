@@ -18,9 +18,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'ShopSaaS - Discover Local Shops in Nepal',
-  description: 'Discover and shop from local businesses in Nepal. Browse groceries, fashion, electronics, handicrafts, and more from trusted local vendors.',
-  keywords: ['Nepal', 'local shops', 'online shopping', 'Kathmandu', 'delivery', 'groceries', 'fashion', 'handicrafts'],
+  title: 'ShopSaaS - Nepali Shops in Japan',
+  description: 'Order from Nepali-owned shops across Japan. Browse groceries, food, fashion, handicrafts, and more from trusted Nepali vendors, delivered nationwide.',
+  keywords: ['Nepali shops Japan', 'Nepali grocery Japan', 'Shin-Okubo', 'Tokyo', 'delivery', 'momo', 'Nepali food', 'diaspora'],
   generator: 'v0.app',
   icons: {
     icon: [

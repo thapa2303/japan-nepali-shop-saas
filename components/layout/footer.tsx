@@ -44,7 +44,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">
-              Discover local shops in Nepal. Support local businesses and get your favorite products delivered to your door.
+              Discover Nepali shops across Japan. Order authentic groceries, food, fashion, and more from Nepali-owned businesses, delivered to your door.
             </p>
             <div className="mt-4 flex items-center gap-4">
               <Link href="#" className="text-muted-foreground hover:text-primary">
@@ -119,11 +119,11 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>Thamel, Kathmandu, Nepal</span>
+                <span>Shin-Okubo, Shinjuku, Tokyo, Japan</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 shrink-0" />
-                <span>+977-1-4XXXXXX</span>
+                <span>+81-3-XXXX-XXXX</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 shrink-0" />

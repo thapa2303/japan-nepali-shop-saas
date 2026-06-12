@@ -38,7 +38,7 @@ export function ProductCard({ product, shopSlug }: ProductCardProps) {
     updateQuantity(product.id, quantity - 1)
   }
 
-  const formatPrice = (price: number) => `Rs. ${price.toLocaleString()}`
+  const formatPrice = (price: number) => `¥${price.toLocaleString()}`
 
   return (
     <Link href={`/shops/${shopSlug}/products/${product.id}`}>

@@ -50,7 +50,7 @@ export function ProductDetailClient({ productId, shopSlug }: ProductDetailClient
     openCart()
   }
 
-  const formatPrice = (price: number) => `Rs. ${price.toLocaleString()}`
+  const formatPrice = (price: number) => `¥${price.toLocaleString()}`
 
   return (
     <div className="container px-4 py-6">
@@ -185,7 +185,7 @@ export function ProductDetailClient({ productId, shopSlug }: ProductDetailClient
                       {variant.name}
                       {variant.price !== product.price && (
                         <span className="ml-2 text-xs text-muted-foreground">
-                          +Rs. {(variant.price - product.price).toLocaleString()}
+                          +¥{(variant.price - product.price).toLocaleString()}
                         </span>
                       )}
                     </Label>

@@ -27,7 +27,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const itemCount = getItemCount()
 
   const formatPrice = (price: number) => {
-    return `Rs. ${price.toLocaleString()}`
+    return `¥${price.toLocaleString()}`
   }
 
   return (

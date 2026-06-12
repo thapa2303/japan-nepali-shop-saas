@@ -15,7 +15,7 @@ export default function CartPage() {
   const subtotal = getSubtotal()
   const itemCount = getItemCount()
 
-  const formatPrice = (price: number) => `Rs. ${price.toLocaleString()}`
+  const formatPrice = (price: number) => `¥${price.toLocaleString()}`
 
   // Calculate total delivery fee
   const totalDeliveryFee = shopCarts.reduce((total, cart) => total + cart.deliveryFee, 0)

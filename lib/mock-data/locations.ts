@@ -1,57 +1,70 @@
 import type { Location } from "@/lib/types"
 
-export const districts: Location[] = [
-  { id: "ktm", name: "Kathmandu", nameNepali: "काठमाडौं", type: "district" },
-  { id: "ltp", name: "Lalitpur", nameNepali: "ललितपुर", type: "district" },
-  { id: "bkt", name: "Bhaktapur", nameNepali: "भक्तपुर", type: "district" },
+// Prefectures with significant Nepali communities in Japan
+export const prefectures: Location[] = [
+  { id: "tokyo", name: "Tokyo", nameNepali: "टोकियो", type: "prefecture" },
+  { id: "saitama", name: "Saitama", nameNepali: "साइतामा", type: "prefecture" },
+  { id: "kanagawa", name: "Kanagawa", nameNepali: "कानागावा", type: "prefecture" },
+  { id: "osaka", name: "Osaka", nameNepali: "ओसाका", type: "prefecture" },
+  { id: "aichi", name: "Aichi", nameNepali: "आइ‍ची", type: "prefecture" },
+  { id: "fukuoka", name: "Fukuoka", nameNepali: "फुकुओका", type: "prefecture" },
 ]
 
-export const municipalities: Location[] = [
-  // Kathmandu
-  { id: "ktm-metro", name: "Kathmandu Metropolitan City", nameNepali: "काठमाडौं महानगरपालिका", type: "municipality", parentId: "ktm" },
-  { id: "budhanilkantha", name: "Budhanilkantha Municipality", nameNepali: "बुढानीलकण्ठ नगरपालिका", type: "municipality", parentId: "ktm" },
-  { id: "tokha", name: "Tokha Municipality", nameNepali: "टोखा नगरपालिका", type: "municipality", parentId: "ktm" },
-  { id: "chandragiri", name: "Chandragiri Municipality", nameNepali: "चन्द्रागिरी नगरपालिका", type: "municipality", parentId: "ktm" },
-  { id: "kirtipur", name: "Kirtipur Municipality", nameNepali: "कीर्तिपुर नगरपालिका", type: "municipality", parentId: "ktm" },
-  
-  // Lalitpur
-  { id: "ltp-metro", name: "Lalitpur Metropolitan City", nameNepali: "ललितपुर महानगरपालिका", type: "municipality", parentId: "ltp" },
-  { id: "godawari", name: "Godawari Municipality", nameNepali: "गोदावरी नगरपालिका", type: "municipality", parentId: "ltp" },
-  { id: "mahalaxmi", name: "Mahalaxmi Municipality", nameNepali: "महालक्ष्मी नगरपालिका", type: "municipality", parentId: "ltp" },
-  
-  // Bhaktapur
-  { id: "bkt-muni", name: "Bhaktapur Municipality", nameNepali: "भक्तपुर नगरपालिका", type: "municipality", parentId: "bkt" },
-  { id: "madhyapur-thimi", name: "Madhyapur Thimi Municipality", nameNepali: "मध्यपुर थिमी नगरपालिका", type: "municipality", parentId: "bkt" },
-  { id: "suryabinayak", name: "Suryabinayak Municipality", nameNepali: "सूर्यविनायक नगरपालिका", type: "municipality", parentId: "bkt" },
+export const cities: Location[] = [
+  // Tokyo
+  { id: "shinjuku", name: "Shinjuku", nameNepali: "शिन्जुकु", type: "city", parentId: "tokyo" },
+  { id: "shibuya", name: "Shibuya", nameNepali: "शिबुया", type: "city", parentId: "tokyo" },
+  { id: "taito", name: "Taito", nameNepali: "ताइतो", type: "city", parentId: "tokyo" },
+  { id: "arakawa", name: "Arakawa", nameNepali: "आरकावा", type: "city", parentId: "tokyo" },
+  { id: "edogawa", name: "Edogawa", nameNepali: "एदोगावा", type: "city", parentId: "tokyo" },
+
+  // Saitama
+  { id: "kawaguchi", name: "Kawaguchi", nameNepali: "कावागुची", type: "city", parentId: "saitama" },
+  { id: "warabi", name: "Warabi", nameNepali: "वारबी", type: "city", parentId: "saitama" },
+  { id: "saitama-city", name: "Saitama City", nameNepali: "साइतामा सहर", type: "city", parentId: "saitama" },
+
+  // Kanagawa
+  { id: "yokohama", name: "Yokohama", nameNepali: "योकोहामा", type: "city", parentId: "kanagawa" },
+  { id: "kawasaki", name: "Kawasaki", nameNepali: "कावासाकी", type: "city", parentId: "kanagawa" },
+
+  // Osaka
+  { id: "osaka-city", name: "Osaka City", nameNepali: "ओसाका सहर", type: "city", parentId: "osaka" },
+  { id: "ikuno", name: "Ikuno", nameNepali: "इकुनो", type: "city", parentId: "osaka" },
+
+  // Aichi
+  { id: "nagoya", name: "Nagoya", nameNepali: "नागोया", type: "city", parentId: "aichi" },
+
+  // Fukuoka
+  { id: "fukuoka-city", name: "Fukuoka City", nameNepali: "फुकुओका सहर", type: "city", parentId: "fukuoka" },
 ]
 
 export const popularAreas = [
-  { name: "Thamel", ward: "26", municipality: "ktm-metro", coordinates: { lat: 27.7154, lng: 85.3123 } },
-  { name: "New Baneshwor", ward: "10", municipality: "ktm-metro", coordinates: { lat: 27.6915, lng: 85.3420 } },
-  { name: "Baluwatar", ward: "4", municipality: "ktm-metro", coordinates: { lat: 27.7283, lng: 85.3285 } },
-  { name: "Lazimpat", ward: "2", municipality: "ktm-metro", coordinates: { lat: 27.7210, lng: 85.3230 } },
-  { name: "Patan Durbar Square", ward: "12", municipality: "ltp-metro", coordinates: { lat: 27.6727, lng: 85.3250 } },
-  { name: "Jawalakhel", ward: "7", municipality: "ltp-metro", coordinates: { lat: 27.6710, lng: 85.3150 } },
-  { name: "Pulchowk", ward: "6", municipality: "ltp-metro", coordinates: { lat: 27.6785, lng: 85.3180 } },
-  { name: "Bhaktapur Durbar Square", ward: "8", municipality: "bkt-muni", coordinates: { lat: 27.6722, lng: 85.4283 } },
-  { name: "Bouddha", ward: "6", municipality: "ktm-metro", coordinates: { lat: 27.7215, lng: 85.3620 } },
-  { name: "Swayambhunath", ward: "15", municipality: "ktm-metro", coordinates: { lat: 27.7149, lng: 85.2903 } },
+  { name: "Shin-Okubo", city: "shinjuku", postalCode: "169-0073", coordinates: { lat: 35.7012, lng: 139.7003 } },
+  { name: "Okubo", city: "shinjuku", postalCode: "169-0072", coordinates: { lat: 35.7008, lng: 139.6970 } },
+  { name: "Takadanobaba", city: "shinjuku", postalCode: "169-0075", coordinates: { lat: 35.7126, lng: 139.7038 } },
+  { name: "Ueno", city: "taito", postalCode: "110-0005", coordinates: { lat: 35.7141, lng: 139.7774 } },
+  { name: "Nippori", city: "arakawa", postalCode: "116-0013", coordinates: { lat: 35.7281, lng: 139.7707 } },
+  { name: "Nishi-Kawaguchi", city: "kawaguchi", postalCode: "332-0021", coordinates: { lat: 35.8074, lng: 139.6932 } },
+  { name: "Warabi Station", city: "warabi", postalCode: "335-0004", coordinates: { lat: 35.8254, lng: 139.6800 } },
+  { name: "Yokohama Station", city: "yokohama", postalCode: "220-0011", coordinates: { lat: 35.4659, lng: 139.6224 } },
+  { name: "Tsuruhashi", city: "ikuno", postalCode: "544-0031", coordinates: { lat: 34.6648, lng: 135.5310 } },
+  { name: "Sakae, Nagoya", city: "nagoya", postalCode: "460-0008", coordinates: { lat: 35.1681, lng: 136.9085 } },
 ]
 
-export function getMunicipalitiesByDistrict(districtId: string): Location[] {
-  return municipalities.filter((m) => m.parentId === districtId)
+export function getCitiesByPrefecture(prefectureId: string): Location[] {
+  return cities.filter((c) => c.parentId === prefectureId)
 }
 
-export function getDistrictById(id: string): Location | undefined {
-  return districts.find((d) => d.id === id)
+export function getPrefectureById(id: string): Location | undefined {
+  return prefectures.find((p) => p.id === id)
 }
 
-export function getMunicipalityById(id: string): Location | undefined {
-  return municipalities.find((m) => m.id === id)
+export function getCityById(id: string): Location | undefined {
+  return cities.find((c) => c.id === id)
 }
 
-// Default location - center of Kathmandu
+// Default location - Shin-Okubo, Tokyo (heart of the Nepali community in Japan)
 export const defaultLocation = {
-  lat: 27.7172,
-  lng: 85.3240,
+  lat: 35.7012,
+  lng: 139.7003,
 }

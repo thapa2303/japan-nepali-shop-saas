@@ -55,9 +55,10 @@ export interface DayHours {
 
 export interface ShopLocation {
   address: string
-  ward: string
-  municipality: string
-  district: string
+  area: string
+  city: string
+  prefecture: string
+  postalCode: string
   coordinates: Coordinates
 }
 
@@ -132,7 +133,7 @@ export interface Location {
   id: string
   name: string
   nameNepali: string
-  type: "district" | "municipality" | "ward"
+  type: "prefecture" | "city" | "area"
   parentId?: string
 }
 
@@ -149,16 +150,16 @@ export interface CheckoutInfo {
   fullName: string
   phone: string
   email?: string
+  postalCode: string
+  prefecture: string
+  city: string
   address: string
-  ward: string
-  municipality: string
-  district: string
-  landmark?: string
+  building?: string
   paymentMethod: PaymentMethod
   notes?: string
 }
 
-export type PaymentMethod = "cod" | "esewa" | "khalti" | "bank-transfer"
+export type PaymentMethod = "cod" | "paypay" | "credit-card" | "bank-transfer"
 
 export interface Order {
   id: string

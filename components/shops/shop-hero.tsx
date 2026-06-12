@@ -140,7 +140,7 @@ export function ShopHero({ shop }: ShopHeroProps) {
                 </p>
                 {shop.deliveryFee !== undefined && (
                   <p className="text-xs text-muted-foreground">
-                    Rs. {shop.deliveryFee} delivery fee
+                    ¥{shop.deliveryFee} delivery fee
                   </p>
                 )}
               </div>
@@ -156,7 +156,7 @@ export function ShopHero({ shop }: ShopHeroProps) {
               <div>
                 <p className="font-medium text-sm">Minimum Order</p>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Rs. {shop.minOrder.toLocaleString()}
+                  ¥{shop.minOrder.toLocaleString()}
                 </p>
               </div>
             </div>

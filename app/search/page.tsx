@@ -160,7 +160,7 @@ function SearchContent() {
                               {shop?.name}
                             </p>
                             <p className="font-semibold mt-2">
-                              Rs. {product.price.toLocaleString()}
+                              ¥{product.price.toLocaleString()}
                             </p>
                           </CardContent>
                         </Card>
@@ -248,11 +248,11 @@ function SearchContent() {
                         </p>
                         <div className="flex items-center gap-2 mt-2">
                           <p className="font-semibold">
-                            Rs. {product.price.toLocaleString()}
+                            ¥{product.price.toLocaleString()}
                           </p>
                           {product.compareAtPrice && (
                             <p className="text-sm text-muted-foreground line-through">
-                              Rs. {product.compareAtPrice.toLocaleString()}
+                              ¥{product.compareAtPrice.toLocaleString()}
                             </p>
                           )}
                         </div>

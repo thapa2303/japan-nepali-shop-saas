@@ -77,7 +77,7 @@ export default function CheckoutPage() {
     ? getMunicipalitiesByDistrict(formData.district)
     : []
 
-  const formatPrice = (price: number) => `Rs. ${price.toLocaleString()}`
+  const formatPrice = (price: number) => `¥${price.toLocaleString()}`
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
