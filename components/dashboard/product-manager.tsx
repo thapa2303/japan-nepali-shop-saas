@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Image from "next/image"
-import { Plus, Pencil, Trash2, Search, AlertTriangle } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, AlertTriangle, Upload, X, ImageIcon } from "lucide-react"
 
 import type { Product } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -67,6 +67,7 @@ interface FormState {
   unit: string
   stockCount: string
   inStock: boolean
+  images: string[]
 }
 
 const emptyForm: FormState = {
@@ -80,7 +81,10 @@ const emptyForm: FormState = {
   unit: "",
   stockCount: "",
   inStock: true,
+  images: [],
 }
+
+const PLACEHOLDER_IMAGE = "/placeholder.svg?height=400&width=400"
 
 const LOW_STOCK_THRESHOLD = 50
 
@@ -92,6 +96,7 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
   const [editing, setEditing] = useState<Product | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filtered = products.filter(
     (p) =>
@@ -118,8 +123,30 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
       unit: product.unit ?? "",
       stockCount: product.stockCount !== undefined ? String(product.stockCount) : "",
       inStock: product.inStock,
+      images: product.images?.filter((img) => img && !img.includes("placeholder.svg")) ?? [],
     })
     setDialogOpen(true)
+  }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) {
+        toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" })
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        setForm((f) => ({ ...f, images: [...f.images, reader.result as string] }))
+      }
+      reader.readAsDataURL(file)
+    })
+    e.target.value = ""
+  }
+
+  const removeImage = (index: number) => {
+    setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }))
   }
 
   const handleSave = () => {
@@ -137,6 +164,7 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
     }
 
     const storeCategory = form.category.trim() || "general"
+    const images = form.images.length > 0 ? form.images : [PLACEHOLDER_IMAGE]
 
     if (editing) {
       setProducts((prev) =>
@@ -152,6 +180,7 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
                 browseCategory: form.browseCategory,
                 storeCategory,
                 category: storeCategory,
+                images,
                 unit: form.unit || undefined,
                 stockCount: form.stockCount ? Number(form.stockCount) : undefined,
                 inStock: form.inStock,
@@ -177,7 +206,7 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
         description: form.description,
         price: Number(form.price),
         compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : undefined,
-        images: ["/placeholder.svg?height=400&width=400"],
+        images,
         browseCategory: form.browseCategory,
         storeCategory,
         category: storeCategory,
@@ -334,6 +363,56 @@ export function ProductManager({ initialProducts, shopId, productLimit }: Produc
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label>Product images</Label>
+              <div className="flex flex-wrap items-center gap-3">
+                {form.images.map((img, index) => (
+                  <div
+                    key={index}
+                    className="group relative h-20 w-20 overflow-hidden rounded-md border bg-muted"
+                  >
+                    <Image
+                      src={img || PLACEHOLDER_IMAGE}
+                      alt={`Product image ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute right-0.5 top-0.5 rounded-full bg-background/90 p-0.5 text-foreground shadow-sm transition-opacity hover:bg-background"
+                      aria-label={`Remove image ${index + 1}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-md border border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  {form.images.length === 0 ? (
+                    <ImageIcon className="h-5 w-5" />
+                  ) : (
+                    <Upload className="h-5 w-5" />
+                  )}
+                  <span className="text-xs">Upload</span>
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The first image is used as the main product photo. JPG or PNG.
+              </p>
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="name">Product name *</Label>
               <Input
