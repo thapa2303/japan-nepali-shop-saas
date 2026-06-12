@@ -8,9 +8,9 @@ import { MobileNav } from "@/components/layout/mobile-nav"
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isDashboard = pathname?.startsWith("/dashboard")
+  const isFullScreen = pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin")
 
-  if (isDashboard) {
+  if (isFullScreen) {
     return <>{children}</>
   }
 

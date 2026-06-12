@@ -1,4 +1,4 @@
-import type { OrderStatus } from "@/lib/types"
+import type { OrderStatus, MerchantStatus, CustomerStatus, SubscriptionTier } from "@/lib/types"
 
 export function formatYen(amount: number): string {
   return `¥${amount.toLocaleString()}`
@@ -71,4 +71,56 @@ export function getNextStatus(status: OrderStatus): OrderStatus | null {
   const idx = orderStatusFlow.indexOf(status)
   if (idx === -1 || idx === orderStatusFlow.length - 1) return null
   return orderStatusFlow[idx + 1]
+}
+
+// ---------- Platform admin status config ----------
+
+export const merchantStatusConfig: Record<
+  MerchantStatus,
+  { label: string; className: string }
+> = {
+  active: {
+    label: "Active",
+    className: "bg-chart-2/20 text-foreground border-chart-2/50",
+  },
+  pending: {
+    label: "Pending review",
+    className: "bg-accent/30 text-accent-foreground border-accent",
+  },
+  suspended: {
+    label: "Suspended",
+    className: "bg-destructive/10 text-destructive border-destructive/30",
+  },
+}
+
+export const customerStatusConfig: Record<
+  CustomerStatus,
+  { label: string; className: string }
+> = {
+  active: {
+    label: "Active",
+    className: "bg-chart-2/20 text-foreground border-chart-2/50",
+  },
+  blocked: {
+    label: "Blocked",
+    className: "bg-destructive/10 text-destructive border-destructive/30",
+  },
+}
+
+export const tierConfig: Record<
+  SubscriptionTier,
+  { label: string; className: string }
+> = {
+  starter: {
+    label: "Starter",
+    className: "bg-muted text-muted-foreground border-border",
+  },
+  growth: {
+    label: "Growth",
+    className: "bg-primary/15 text-primary border-primary/40",
+  },
+  premium: {
+    label: "Premium",
+    className: "bg-chart-5/20 text-foreground border-chart-5/40",
+  },
 }

@@ -227,3 +227,46 @@ export interface MerchantSubscription {
   currentPeriodEnd: string
   invoices: Invoice[]
 }
+
+// ---------- Platform (SaaS operator) Admin types ----------
+
+export type MerchantStatus = "active" | "pending" | "suspended"
+
+export interface PlatformMerchant {
+  shopId: string
+  status: MerchantStatus
+  tier: SubscriptionTier
+  joinedAt: string
+  monthlyRevenue: number
+  totalOrders: number
+  productCount: number
+  commissionEarned: number
+}
+
+export type CustomerStatus = "active" | "blocked"
+
+export interface PlatformCustomer {
+  id: string
+  name: string
+  email: string
+  phone: string
+  city: string
+  prefecture: string
+  status: CustomerStatus
+  joinedAt: string
+  totalOrders: number
+  totalSpent: number
+}
+
+export interface PlatformMonthly {
+  month: string
+  gmv: number
+  mrr: number
+  orders: number
+  newMerchants: number
+}
+
+export interface TierDistribution {
+  tier: SubscriptionTier
+  merchants: number
+}
