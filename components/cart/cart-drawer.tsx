@@ -32,8 +32,8 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-md">
-        <SheetHeader className="space-y-0 pb-4">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+        <SheetHeader className="space-y-0 border-b p-6 pb-4">
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5" />
@@ -43,7 +43,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         </SheetHeader>
 
         {shopCarts.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 py-12">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 py-12">
             <div className="rounded-full bg-muted p-6">
               <ShoppingBag className="h-12 w-12 text-muted-foreground" />
             </div>
@@ -59,7 +59,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           </div>
         ) : (
           <>
-            <ScrollArea className="flex-1 -mx-6 px-6">
+            <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-6">
                 {shopCarts.map((shopCart) => (
                   <div key={shopCart.shopId} className="space-y-4">
@@ -168,7 +168,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               </div>
             </ScrollArea>
 
-            <div className="border-t pt-4 space-y-4">
+            <div className="border-t p-6 space-y-4">
               <div className="flex items-center justify-between text-lg font-semibold">
                 <span>Subtotal</span>
                 <span>{formatPrice(subtotal)}</span>
