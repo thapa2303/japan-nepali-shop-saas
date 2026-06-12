@@ -4,12 +4,12 @@ const steps = [
   {
     icon: MapPin,
     title: "Set Your Location",
-    description: "Choose your area in Kathmandu Valley to find nearby shops",
+    description: "Choose your area in Japan to find nearby Nepali shops",
   },
   {
     icon: Store,
-    title: "Browse Local Shops",
-    description: "Explore trusted local businesses in your neighborhood",
+    title: "Browse Nepali Shops",
+    description: "Explore trusted Nepali-owned businesses near you",
   },
   {
     icon: ShoppingBag,
@@ -30,7 +30,7 @@ export function HowItWorks() {
         <div className="text-center mb-12">
           <h2 className="text-2xl font-bold md:text-3xl">How It Works</h2>
           <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-            Shopping from local businesses has never been easier
+            Ordering from Nepali shops in Japan has never been easier
           </p>
         </div>
 

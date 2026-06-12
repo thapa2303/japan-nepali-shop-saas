@@ -107,7 +107,7 @@ export function ShopHero({ shop }: ShopHeroProps) {
                 {shop.location.address}
               </p>
               <p className="text-xs text-muted-foreground">
-                {shop.location.municipality}, {shop.location.district}
+                {shop.location.area}, {shop.location.city}, {shop.location.prefecture}
               </p>
             </div>
           </div>

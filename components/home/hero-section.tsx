@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { districts, popularAreas } from "@/lib/mock-data/locations"
+import { popularAreas } from "@/lib/mock-data/locations"
 
 export function HeroSection() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -39,12 +39,12 @@ export function HeroSection() {
       <div className="container relative px-4 py-16 md:py-24 lg:py-32">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="text-balance text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-            Discover Local Shops in{" "}
-            <span className="text-primary">Nepal</span>
+            Discover Nepali Shops in{" "}
+            <span className="text-primary">Japan</span>
           </h1>
           <p className="mt-6 text-pretty text-lg text-muted-foreground md:text-xl">
-            Shop from trusted local businesses in Kathmandu Valley. Fresh groceries, 
-            fashion, electronics, handicrafts, and more delivered to your doorstep.
+            Order from trusted Nepali-owned shops across Japan. Authentic groceries, 
+            momo, spices, fashion, and daily essentials delivered to your doorstep.
           </p>
 
           {/* Search Form */}

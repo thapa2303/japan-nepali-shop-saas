@@ -17,7 +17,7 @@ export function NearbyShops() {
           <div>
             <h2 className="text-2xl font-bold md:text-3xl">Shops Near You</h2>
             <p className="mt-1 text-muted-foreground">
-              Popular shops in Kathmandu Valley
+              Popular Nepali shops across Japan
             </p>
           </div>
           <Link

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCart } from "@/lib/contexts/cart-context"
-import { districts, getMunicipalitiesByDistrict } from "@/lib/mock-data/locations"
+import { prefectures } from "@/lib/mock-data/locations"
 import type { PaymentMethod } from "@/lib/types"
 
 const paymentMethods = [
@@ -31,21 +31,21 @@ const paymentMethods = [
     icon: Truck,
   },
   {
-    id: "esewa" as PaymentMethod,
-    name: "eSewa",
-    description: "Pay via eSewa mobile wallet",
+    id: "paypay" as PaymentMethod,
+    name: "PayPay",
+    description: "Pay via PayPay mobile wallet",
     icon: Wallet,
   },
   {
-    id: "khalti" as PaymentMethod,
-    name: "Khalti",
-    description: "Pay via Khalti digital wallet",
-    icon: Wallet,
+    id: "credit-card" as PaymentMethod,
+    name: "Credit / Debit Card",
+    description: "Visa, Mastercard, JCB, AMEX",
+    icon: CreditCard,
   },
   {
     id: "bank-transfer" as PaymentMethod,
-    name: "Bank Transfer",
-    description: "Direct bank transfer",
+    name: "Bank Transfer (Furikomi)",
+    description: "Direct Japanese bank transfer",
     icon: CreditCard,
   },
 ]
@@ -58,11 +58,11 @@ export default function CheckoutPage() {
     fullName: "",
     phone: "",
     email: "",
-    district: "",
-    municipality: "",
-    ward: "",
+    postalCode: "",
+    prefecture: "",
+    city: "",
     address: "",
-    landmark: "",
+    building: "",
     notes: "",
   })
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod")
@@ -72,10 +72,6 @@ export default function CheckoutPage() {
   const subtotal = getSubtotal()
   const totalDeliveryFee = shopCarts.reduce((total, cart) => total + cart.deliveryFee, 0)
   const grandTotal = subtotal + totalDeliveryFee
-
-  const municipalities = formData.district 
-    ? getMunicipalitiesByDistrict(formData.district)
-    : []
 
   const formatPrice = (price: number) => `¥${price.toLocaleString()}`
 
@@ -87,11 +83,7 @@ export default function CheckoutPage() {
   }
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      [name]: value,
-      ...(name === "district" ? { municipality: "" } : {})
-    }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,9 +101,9 @@ export default function CheckoutPage() {
   const isFormValid = 
     formData.fullName &&
     formData.phone &&
-    formData.district &&
-    formData.municipality &&
-    formData.ward &&
+    formData.postalCode &&
+    formData.prefecture &&
+    formData.city &&
     formData.address
 
   if (shopCarts.length === 0) {
@@ -171,7 +163,7 @@ export default function CheckoutPage() {
                       type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      placeholder="+977-98XXXXXXXX"
+                      placeholder="090-XXXX-XXXX"
                       required
                     />
                   </div>
@@ -198,73 +190,65 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
-                    <Label>District *</Label>
-                    <Select
-                      value={formData.district}
-                      onValueChange={(value) => handleSelectChange("district", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select district" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {districts.map((district) => (
-                          <SelectItem key={district.id} value={district.id}>
-                            {district.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Municipality *</Label>
-                    <Select
-                      value={formData.municipality}
-                      onValueChange={(value) => handleSelectChange("municipality", value)}
-                      disabled={!formData.district}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select municipality" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {municipalities.map((muni) => (
-                          <SelectItem key={muni.id} value={muni.id}>
-                            {muni.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ward">Ward No. *</Label>
+                    <Label htmlFor="postalCode">Postal Code *</Label>
                     <Input
-                      id="ward"
-                      name="ward"
-                      value={formData.ward}
+                      id="postalCode"
+                      name="postalCode"
+                      value={formData.postalCode}
                       onChange={handleInputChange}
-                      placeholder="e.g., 5"
+                      placeholder="例: 169-0073"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Prefecture (都道府県) *</Label>
+                    <Select
+                      value={formData.prefecture}
+                      onValueChange={(value) => handleSelectChange("prefecture", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select prefecture" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {prefectures.map((prefecture) => (
+                          <SelectItem key={prefecture.id} value={prefecture.id}>
+                            {prefecture.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City / Ward (市区町村) *</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Shinjuku-ku"
                       required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Street Address *</Label>
+                  <Label htmlFor="address">Address (町名・番地) *</Label>
                   <Input
                     id="address"
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    placeholder="House/Building, Street name"
+                    placeholder="e.g., Hyakunincho 2-1-1"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="landmark">Landmark (Optional)</Label>
+                  <Label htmlFor="building">Building / Room (建物名・部屋番号)</Label>
                   <Input
-                    id="landmark"
-                    name="landmark"
-                    value={formData.landmark}
+                    id="building"
+                    name="building"
+                    value={formData.building}
                     onChange={handleInputChange}
-                    placeholder="Near any famous place"
+                    placeholder="e.g., Sakura Building 301"
                   />
                 </div>
               </CardContent>

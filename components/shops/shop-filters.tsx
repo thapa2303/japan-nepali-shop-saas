@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { categories } from "@/lib/mock-data/categories"
-import { districts } from "@/lib/mock-data/locations"
+import { prefectures } from "@/lib/mock-data/locations"
 import type { ShopCategory, ShopFeature } from "@/lib/types"
 
 const features: { value: ShopFeature; label: string }[] = [
@@ -113,19 +113,19 @@ export function ShopFilters({ totalCount }: ShopFiltersProps) {
 
       {/* Location Filter */}
       <div>
-        <Label className="text-sm font-semibold">District</Label>
+        <Label className="text-sm font-semibold">Prefecture</Label>
         <Select
           value={selectedDistrict || "all"}
           onValueChange={(value) => updateParams("district", value === "all" ? null : value)}
         >
           <SelectTrigger className="mt-2">
-            <SelectValue placeholder="All Districts" />
+            <SelectValue placeholder="All Prefectures" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Districts</SelectItem>
-            {districts.map((district) => (
-              <SelectItem key={district.id} value={district.id}>
-                {district.name}
+            <SelectItem value="all">All Prefectures</SelectItem>
+            {prefectures.map((prefecture) => (
+              <SelectItem key={prefecture.id} value={prefecture.id}>
+                {prefecture.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -240,7 +240,7 @@ export function ShopFilters({ totalCount }: ShopFiltersProps) {
           )}
           {selectedDistrict && (
             <Badge variant="secondary" className="gap-1">
-              {districts.find((d) => d.id === selectedDistrict)?.name}
+              {prefectures.find((d) => d.id === selectedDistrict)?.name}
               <button onClick={() => updateParams("district", null)}>
                 <X className="h-3 w-3" />
               </button>

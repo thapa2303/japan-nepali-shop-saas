@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ShopGrid } from "@/components/shops/shop-grid"
 import { ShopFilters } from "@/components/shops/shop-filters"
 import { shops as allShops } from "@/lib/mock-data/shops"
-import { districts } from "@/lib/mock-data/locations"
+import { prefectures } from "@/lib/mock-data/locations"
 import type { Shop, ShopCategory, ShopFeature } from "@/lib/types"
 
 // Dynamically import map component to avoid SSR issues
@@ -63,12 +63,12 @@ function ShopsContent() {
       result = result.filter((shop) => shop.category === category)
     }
 
-    // District filter
+    // Prefecture filter
     if (district) {
-      const districtName = districts.find((d) => d.id === district)?.name
-      if (districtName) {
+      const prefectureName = prefectures.find((d) => d.id === district)?.name
+      if (prefectureName) {
         result = result.filter((shop) => 
-          shop.location.district.toLowerCase().includes(districtName.toLowerCase())
+          shop.location.prefecture.toLowerCase().includes(prefectureName.toLowerCase())
         )
       }
     }
@@ -117,7 +117,7 @@ function ShopsContent() {
           }
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Discover local businesses in Kathmandu Valley
+          Discover Nepali-owned shops across Japan
         </p>
       </div>
 
