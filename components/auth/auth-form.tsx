@@ -3,12 +3,14 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Eye, EyeOff, Loader2, Mail, Lock, User, Store } from "lucide-react"
+import { Eye, EyeOff, Loader2, Mail, Lock, User, Store, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { prefectures } from "@/lib/mock-data/locations"
 import { toast } from "@/hooks/use-toast"
 
 type AccountType = "customer" | "merchant"
@@ -19,6 +21,10 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [accountType, setAccountType] = useState<AccountType>("customer")
+  const [shopName, setShopName] = useState("")
+  const [shopPrefecture, setShopPrefecture] = useState("")
+  const [shopCity, setShopCity] = useState("")
+  const [shopAddress, setShopAddress] = useState("")
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +38,20 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault()
+    if (accountType === "merchant") {
+      if (!shopName.trim()) {
+        toast({ title: "Shop name required", description: "Please enter your shop name.", variant: "destructive" })
+        return
+      }
+      if (!shopPrefecture || !shopCity.trim()) {
+        toast({
+          title: "Shop location required",
+          description: "Please select a prefecture and enter your city.",
+          variant: "destructive",
+        })
+        return
+      }
+    }
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
@@ -39,10 +59,10 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
         title: "Account created",
         description:
           accountType === "merchant"
-            ? "Your merchant account is ready. Let's set up your shop."
+            ? `${shopName} is set up. Finish your shop profile to go live.`
             : "Your account is ready. Start exploring local shops.",
       })
-      router.push(accountType === "merchant" ? "/dashboard" : "/")
+      router.push(accountType === "merchant" ? "/dashboard/profile" : "/account")
     }, 900)
   }
 
@@ -197,6 +217,73 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
                 </button>
               </div>
             </div>
+
+            {accountType === "merchant" ? (
+              <div className="flex flex-col gap-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <div className="flex items-center gap-2">
+                  <Store className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Set up your shop</span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="shop-name">Shop name</Label>
+                  <div className="relative">
+                    <Store className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="shop-name"
+                      value={shopName}
+                      onChange={(e) => setShopName(e.target.value)}
+                      placeholder="e.g. Himalaya Asian Mart"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="shop-prefecture">Shop location</Label>
+                  <Select value={shopPrefecture} onValueChange={setShopPrefecture}>
+                    <SelectTrigger id="shop-prefecture">
+                      <SelectValue placeholder="Select prefecture" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {prefectures.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="shop-city" className="sr-only">
+                    City
+                  </Label>
+                  <Input
+                    id="shop-city"
+                    value={shopCity}
+                    onChange={(e) => setShopCity(e.target.value)}
+                    placeholder="City / Ward (e.g. Shinjuku)"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="shop-address" className="sr-only">
+                    Street address
+                  </Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="shop-address"
+                      value={shopAddress}
+                      onChange={(e) => setShopAddress(e.target.value)}
+                      placeholder="Street address (optional)"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             <div className="flex items-start gap-2">
               <Checkbox id="terms" required className="mt-0.5" />

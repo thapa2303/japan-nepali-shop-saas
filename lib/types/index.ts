@@ -281,3 +281,48 @@ export interface TierDistribution {
   tier: SubscriptionTier
   merchants: number
 }
+
+// ---------- Customer account types ----------
+
+export interface CustomerAddress {
+  id: string
+  label: string
+  fullName: string
+  phone: string
+  postalCode: string
+  prefecture: string
+  city: string
+  address: string
+  building?: string
+  isDefault: boolean
+}
+
+export interface CustomerOrderSummary {
+  id: string
+  shopName: string
+  shopSlug: string
+  date: string
+  itemCount: number
+  total: number
+  status: OrderStatus
+}
+
+export interface CustomerProfile {
+  id: string
+  name: string
+  nameNepali?: string
+  email: string
+  phone: string
+  avatar?: string
+  joinedAt: string
+  preferredLanguage: "en" | "ne"
+  addresses: CustomerAddress[]
+  recentOrders: CustomerOrderSummary[]
+  favoriteShopSlugs: string[]
+  notifications: {
+    orderUpdates: boolean
+    promotions: boolean
+    newShops: boolean
+    newsletter: boolean
+  }
+}

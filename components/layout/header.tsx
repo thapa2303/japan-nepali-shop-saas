@@ -66,9 +66,9 @@ export function Header() {
           </Button>
 
           <Button asChild variant="ghost" size="icon" className="hidden md:flex">
-            <Link href="/auth">
+            <Link href="/account">
               <User className="h-5 w-5" />
-              <span className="sr-only">Sign In / Register</span>
+              <span className="sr-only">My Account</span>
             </Link>
           </Button>
 
@@ -108,9 +108,9 @@ export function Header() {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="w-full justify-start gap-3">
-                    <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href="/account" onClick={() => setMobileMenuOpen(false)}>
                       <User className="h-5 w-5" />
-                      Sign In / Register
+                      My Account
                     </Link>
                   </Button>
                 </div>
