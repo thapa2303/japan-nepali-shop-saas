@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
+import type { ChangeEvent } from "react"
 import Image from "next/image"
-import { Save } from "lucide-react"
+import { Save, Upload } from "lucide-react"
 
 import type { Shop } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -44,9 +45,30 @@ export function ShopProfileForm({ shop }: { shop: Shop }) {
     isOpen: shop.isOpen,
   })
   const [hours, setHours] = useState(shop.openingHours)
+  const [logoPreview, setLogoPreview] = useState(shop.logo || "/placeholder.svg")
+  const [coverPreview, setCoverPreview] = useState(shop.coverImage || "/placeholder.svg")
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   const update = (key: string, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }))
+
+  const handleImageUpload = (
+    e: ChangeEvent<HTMLInputElement>,
+    setPreview: (value: string) => void,
+    successMessage: string,
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setPreview(reader.result as string)
+      toast({ title: successMessage })
+    }
+    reader.readAsDataURL(file)
+    // reset so selecting the same file again still fires onChange
+    e.target.value = ""
+  }
 
   const handleSave = () => {
     toast({
@@ -74,19 +96,37 @@ export function ShopProfileForm({ shop }: { shop: Shop }) {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative h-20 w-20 overflow-hidden rounded-lg border">
-              <Image src={shop.logo || "/placeholder.svg"} alt="Logo" fill className="object-cover" sizes="80px" />
+              <Image src={logoPreview || "/placeholder.svg"} alt="Logo" fill className="object-cover" sizes="80px" />
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium">Shop logo</p>
-              <Button variant="outline" size="sm">Upload new logo</Button>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleImageUpload(e, setLogoPreview, "Logo updated successfully")}
+              />
+              <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()}>
+                <Upload className="h-4 w-4" /> Upload new logo
+              </Button>
             </div>
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium">Cover image</p>
             <div className="relative h-32 w-full overflow-hidden rounded-lg border">
-              <Image src={shop.coverImage || "/placeholder.svg"} alt="Cover" fill className="object-cover" sizes="100vw" />
+              <Image src={coverPreview || "/placeholder.svg"} alt="Cover" fill className="object-cover" sizes="100vw" />
             </div>
-            <Button variant="outline" size="sm">Upload new cover</Button>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageUpload(e, setCoverPreview, "Cover image updated successfully")}
+            />
+            <Button variant="outline" size="sm" onClick={() => coverInputRef.current?.click()}>
+              <Upload className="h-4 w-4" /> Upload new cover
+            </Button>
           </div>
         </CardContent>
       </Card>

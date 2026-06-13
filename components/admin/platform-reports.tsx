@@ -26,10 +26,31 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function PlatformReports() {
-  const exportReport = () =>
-    toast({ title: "Report exported", description: "Your CSV download will begin shortly." })
-
   const totalCategoryRevenue = categorySales.reduce((sum, c) => sum + c.revenue, 0)
+
+  const exportReport = () => {
+    const escape = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`
+    const rows: (string | number)[][] = [
+      ["Section", "Metric", "Value"],
+      ["Summary", "Monthly GMV", platformStats.monthlyGmv],
+      ["Summary", "Commission earned", platformStats.monthlyCommission],
+      ["Summary", "Total orders", platformStats.totalOrders],
+      ["Summary", "Active merchants", platformStats.activeMerchants],
+      ...categorySales.map((c) => ["Category revenue", c.category, c.revenue]),
+      ...topMerchants.map((m) => ["Top merchant", getShopName(m.shopId), m.revenue]),
+    ]
+    const csv = rows.map((row) => row.map(escape).join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "platform-report.csv"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast({ title: "CSV exported successfully", description: "Your platform report has been downloaded." })
+  }
 
   return (
     <div className="space-y-6">

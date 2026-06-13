@@ -1,6 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Facebook, Instagram, Mail, MapPin, Phone, ShoppingBag, Twitter } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { toast } from "@/hooks/use-toast"
 
 const footerLinks = {
   shop: [
@@ -10,23 +13,29 @@ const footerLinks = {
     { label: "Featured Shops", href: "/shops?featured=true" },
   ],
   support: [
-    { label: "Help Center", href: "#" },
-    { label: "Contact Us", href: "#" },
-    { label: "FAQs", href: "#" },
-    { label: "Delivery Info", href: "#" },
+    { label: "Help Center", href: "/help" },
+    { label: "Contact Us", href: "/contact" },
+    { label: "FAQs", href: "/faqs" },
+    { label: "Delivery Info", href: "/delivery-info" },
   ],
   business: [
-    { label: "Sell on ShopSaaS", href: "#" },
-    { label: "Merchant Dashboard", href: "#" },
-    { label: "Pricing Plans", href: "#" },
-    { label: "Partner Program", href: "#" },
+    { label: "Sell on ShopSaaS", href: "/sell" },
+    { label: "Merchant Dashboard", href: "/dashboard" },
+    { label: "Pricing Plans", href: "/pricing" },
+    { label: "Partner Program", href: "/partner-program" },
   ],
   legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-    { label: "Refund Policy", href: "#" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+    { label: "Refund Policy", href: "/refund-policy" },
   ],
 }
+
+const socialLinks = [
+  { label: "Facebook", icon: Facebook },
+  { label: "Instagram", icon: Instagram },
+  { label: "Twitter", icon: Twitter },
+]
 
 export function Footer() {
   return (
@@ -47,18 +56,22 @@ export function Footer() {
               Discover Nepali shops across Japan. Order authentic groceries, food, fashion, and more from Nepali-owned businesses, delivered to your door.
             </p>
             <div className="mt-4 flex items-center gap-4">
-              <Link href="#" className="text-muted-foreground hover:text-primary">
-                <Facebook className="h-5 w-5" />
-                <span className="sr-only">Facebook</span>
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary">
-                <Instagram className="h-5 w-5" />
-                <span className="sr-only">Instagram</span>
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </Link>
+              {socialLinks.map((social) => (
+                <button
+                  key={social.label}
+                  type="button"
+                  onClick={() =>
+                    toast({
+                      title: "Social link coming soon",
+                      description: `Our ${social.label} page will be available soon.`,
+                    })
+                  }
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <social.icon className="h-5 w-5" />
+                  <span className="sr-only">{social.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 

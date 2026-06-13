@@ -6,10 +6,10 @@ import { Bell, Globe, ShieldAlert } from "lucide-react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -17,6 +17,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { toast } from "@/hooks/use-toast"
 
 export function MerchantSettings() {
@@ -25,8 +36,19 @@ export function MerchantSettings() {
   const [notifyOrders, setNotifyOrders] = useState(true)
   const [notifyReviews, setNotifyReviews] = useState(true)
   const [notifyPayouts, setNotifyPayouts] = useState(true)
+  const [shopClosed, setShopClosed] = useState(false)
 
   const save = () => toast({ title: "Settings saved", description: "Your preferences have been updated." })
+
+  const closeShop = () => {
+    setShopClosed(true)
+    toast({ title: "Shop closed", description: "Your shop is now hidden from customers." })
+  }
+
+  const reopenShop = () => {
+    setShopClosed(false)
+    toast({ title: "Shop reopened", description: "Your shop is visible to customers again." })
+  }
 
   return (
     <>
@@ -113,12 +135,45 @@ export function MerchantSettings() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-medium">Close shop</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">Close shop</p>
+              {shopClosed ? (
+                <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive">
+                  Closed
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-chart-2/50 bg-chart-2/20 text-foreground">
+                  Open
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">Temporarily hide your shop from the marketplace</p>
           </div>
-          <Button variant="outline" className="text-destructive hover:text-destructive">
-            Close shop
-          </Button>
+          {shopClosed ? (
+            <Button variant="outline" onClick={reopenShop}>
+              Reopen shop
+            </Button>
+          ) : (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="text-destructive hover:text-destructive">
+                  Close shop
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Close shop?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Your shop will be hidden from customers. You can reopen it later from settings.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={closeShop}>Close shop</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </CardContent>
       </Card>
     </>

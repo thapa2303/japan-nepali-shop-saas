@@ -289,11 +289,11 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
               <Checkbox id="terms" required className="mt-0.5" />
               <Label htmlFor="terms" className="text-sm font-normal leading-relaxed text-muted-foreground">
                 I agree to the{" "}
-                <Link href="#" className="text-primary hover:underline">
+                <Link href="/terms" className="text-primary hover:underline">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="#" className="text-primary hover:underline">
+                <Link href="/privacy" className="text-primary hover:underline">
                   Privacy Policy
                 </Link>
               </Label>

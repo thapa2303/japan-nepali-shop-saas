@@ -100,7 +100,7 @@ export default function OrderConfirmationPage() {
         {/* Support Info */}
         <p className="mt-8 text-sm text-muted-foreground">
           Need help with your order?{" "}
-          <Link href="#" className="text-primary hover:underline">
+          <Link href="/contact" className="text-primary hover:underline">
             Contact Support
           </Link>
         </p>
