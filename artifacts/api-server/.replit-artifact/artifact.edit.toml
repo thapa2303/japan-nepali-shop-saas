@@ -1,0 +1,4 @@
+[[services]]
+localPort = 8080
+name = "API Server"
+paths = ["/api"]
