@@ -21,6 +21,12 @@ export interface Shop {
   deliveryFee?: number
   deliveryTime?: string
   featured?: boolean
+  // Google Maps "registered business type" tag shown on the storefront (e.g. ネパール物産店)
+  googleMapsTag?: string
+  // Link to the physical storefront on Google Maps
+  googleMapsUrl?: string
+  // The merchant's connected online store URL
+  onlineStoreUrl?: string
 }
 
 export type ShopCategory =
