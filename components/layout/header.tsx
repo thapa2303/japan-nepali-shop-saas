@@ -65,9 +65,11 @@ export function Header() {
             </Link>
           </Button>
 
-          <Button variant="ghost" size="icon" className="hidden md:flex">
-            <User className="h-5 w-5" />
-            <span className="sr-only">Account</span>
+          <Button asChild variant="ghost" size="icon" className="hidden md:flex">
+            <Link href="/auth">
+              <User className="h-5 w-5" />
+              <span className="sr-only">Sign In / Register</span>
+            </Link>
           </Button>
 
           {/* Mobile Menu */}
@@ -105,9 +107,11 @@ export function Header() {
                       Merchant Dashboard
                     </Link>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start gap-3">
-                    <User className="h-5 w-5" />
-                    Sign In / Register
+                  <Button asChild variant="outline" className="w-full justify-start gap-3">
+                    <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
+                      <User className="h-5 w-5" />
+                      Sign In / Register
+                    </Link>
                   </Button>
                 </div>
               </div>
