@@ -12,6 +12,11 @@ import {
   CreditCard,
   ChevronLeft,
   Star,
+  Tags,
+  Ticket,
+  Truck,
+  Users,
+  Settings,
 } from "lucide-react"
 
 import {
@@ -34,10 +39,15 @@ import { CURRENT_MERCHANT_SHOP_ID, merchantSubscription, getPlanByTier } from "@
 const navItems = [
   { title: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { title: "Products", href: "/dashboard/products", icon: Package },
+  { title: "Categories", href: "/dashboard/categories", icon: Tags },
   { title: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
+  { title: "Coupons", href: "/dashboard/coupons", icon: Ticket },
   { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { title: "Shop Profile", href: "/dashboard/profile", icon: Store },
+  { title: "Delivery", href: "/dashboard/delivery", icon: Truck },
+  { title: "Staff", href: "/dashboard/staff", icon: Users },
   { title: "Subscription", href: "/dashboard/subscription", icon: CreditCard },
+  { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
 export function DashboardSidebar() {

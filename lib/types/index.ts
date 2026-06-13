@@ -282,6 +282,112 @@ export interface TierDistribution {
   merchants: number
 }
 
+// ---------- Merchant management extras ----------
+
+export type CouponType = "percentage" | "fixed" | "free-shipping"
+export type CouponStatus = "active" | "scheduled" | "expired" | "disabled"
+
+export interface Coupon {
+  id: string
+  code: string
+  description: string
+  type: CouponType
+  value: number
+  minSpend?: number
+  usageLimit?: number
+  usedCount: number
+  startDate: string
+  endDate: string
+  status: CouponStatus
+}
+
+export interface StoreCategory {
+  id: string
+  name: string
+  productCount: number
+  visible: boolean
+}
+
+export type StaffRole = "owner" | "manager" | "staff"
+export type StaffStatus = "active" | "invited" | "disabled"
+
+export interface StaffUser {
+  id: string
+  name: string
+  email: string
+  role: StaffRole
+  status: StaffStatus
+  lastActive: string
+  avatar?: string
+}
+
+export interface DeliveryZone {
+  id: string
+  name: string
+  fee: number
+  minOrder: number
+  estimatedTime: string
+  enabled: boolean
+}
+
+export interface DeliverySettings {
+  deliveryEnabled: boolean
+  pickupEnabled: boolean
+  freeDeliveryThreshold: number
+  preparationTime: string
+  zones: DeliveryZone[]
+}
+
+// ---------- Platform Super Admin (multi-tenant) types ----------
+
+export type TenantStatus = "active" | "suspended" | "trial" | "past-due"
+
+export interface Tenant {
+  id: string
+  name: string
+  slug: string
+  region: string
+  plan: SubscriptionTier
+  status: TenantStatus
+  ownerName: string
+  ownerEmail: string
+  merchants: number
+  customers: number
+  mrr: number
+  createdAt: string
+  features: Record<string, boolean>
+}
+
+export type AuditSeverity = "info" | "warning" | "critical"
+
+export interface AuditLog {
+  id: string
+  actor: string
+  actorRole: string
+  action: string
+  target: string
+  tenant: string
+  severity: AuditSeverity
+  timestamp: string
+  ip: string
+}
+
+export interface FeatureFlag {
+  key: string
+  name: string
+  description: string
+  category: string
+  defaultEnabled: boolean
+}
+
+export interface ConsoleRole {
+  id: string
+  name: string
+  description: string
+  members: number
+  permissions: string[]
+}
+
 // ---------- Customer account types ----------
 
 export interface CustomerAddress {
