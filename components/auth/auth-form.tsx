@@ -12,31 +12,54 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { prefectures } from "@/lib/mock-data/locations"
 import { toast } from "@/hooks/use-toast"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { ApiError } from "@/lib/api/client"
 
 type AccountType = "customer" | "merchant"
 
 export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "register" }) {
   const router = useRouter()
+  const { login, register } = useAuth()
   const [tab, setTab] = useState<"signin" | "register">(defaultTab)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [accountType, setAccountType] = useState<AccountType>("customer")
+
+  // Sign-in fields
+  const [signInEmail, setSignInEmail] = useState("")
+  const [signInPassword, setSignInPassword] = useState("")
+
+  // Register fields
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [shopName, setShopName] = useState("")
   const [shopPrefecture, setShopPrefecture] = useState("")
   const [shopCity, setShopCity] = useState("")
   const [shopAddress, setShopAddress] = useState("")
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const routeForRole = (role: string) =>
+    role === "admin" ? "/admin" : role === "merchant" ? "/dashboard" : "/account"
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const user = await login(signInEmail, signInPassword)
       toast({ title: "Welcome back", description: "You have signed in successfully." })
-      router.push("/")
-    }, 900)
+      router.push(routeForRole(user.role))
+    } catch (error) {
+      toast({
+        title: "Sign in failed",
+        description: error instanceof ApiError ? error.message : "Please check your credentials and try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     if (accountType === "merchant") {
       if (!shopName.trim()) {
@@ -53,8 +76,17 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
       }
     }
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const user = await register({
+        name,
+        email,
+        password,
+        role: accountType,
+        shop:
+          accountType === "merchant"
+            ? { name: shopName, prefecture: shopPrefecture, city: shopCity, address: shopAddress }
+            : undefined,
+      })
       toast({
         title: "Account created",
         description:
@@ -62,8 +94,16 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
             ? `${shopName} is set up. Finish your shop profile to go live.`
             : "Your account is ready. Start exploring local shops.",
       })
-      router.push(accountType === "merchant" ? "/dashboard/profile" : "/account")
-    }, 900)
+      router.push(accountType === "merchant" ? "/dashboard/profile" : routeForRole(user.role))
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: error instanceof ApiError ? error.message : "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -85,6 +125,8 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
                   id="signin-email"
                   type="email"
                   required
+                  value={signInEmail}
+                  onChange={(e) => setSignInEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="pl-10"
                   autoComplete="email"
@@ -105,6 +147,8 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
                   id="signin-password"
                   type={showPassword ? "text" : "password"}
                   required
+                  value={signInPassword}
+                  onChange={(e) => setSignInPassword(e.target.value)}
                   placeholder="Enter your password"
                   className="pl-10 pr-10"
                   autoComplete="current-password"
@@ -176,7 +220,15 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
               <Label htmlFor="register-name">Full name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="register-name" required placeholder="Your name" className="pl-10" autoComplete="name" />
+                <Input
+                  id="register-name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="pl-10"
+                  autoComplete="name"
+                />
               </div>
             </div>
 
@@ -188,6 +240,8 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
                   id="register-email"
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="pl-10"
                   autoComplete="email"
@@ -203,6 +257,8 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
                   id="register-password"
                   type={showPassword ? "text" : "password"}
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password"
                   className="pl-10 pr-10"
                   autoComplete="new-password"

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { SiteChrome } from '@/components/layout/site-chrome'
+import { AuthProvider } from '@/lib/contexts/auth-context'
 import { CartProvider } from '@/lib/contexts/cart-context'
 import { CategoryProvider } from '@/lib/contexts/category-context'
 import { Toaster } from '@/components/ui/toaster'
@@ -57,11 +58,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
-        <CategoryProvider>
-          <CartProvider>
-            <SiteChrome>{children}</SiteChrome>
-          </CartProvider>
-        </CategoryProvider>
+        <AuthProvider>
+          <CategoryProvider>
+            <CartProvider>
+              <SiteChrome>{children}</SiteChrome>
+            </CartProvider>
+          </CategoryProvider>
+        </AuthProvider>
         <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
