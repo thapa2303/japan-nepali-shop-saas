@@ -28,11 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const { data: user, isLoading: isUserLoading, refetch } = useGetMe({
+  const { data: user, isLoading: isUserLoading } = useGetMe({
     query: {
       queryKey: getGetMeQueryKey(),
       retry: false,
       staleTime: 1000 * 60 * 5,
+      throwOnError: false,
     },
   });
 
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (data: LoginInput) => {
     try {
       const res = await loginMutation.mutateAsync({ data });
-      queryClient.setQueryData(["/api/auth/me"], res.user);
+      queryClient.setQueryData(getGetMeQueryKey(), res.user);
       
       if (res.user.roles.includes("PLATFORM_SUPER_ADMIN")) {
         setLocation("/console");
@@ -53,9 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLocation("/");
       }
     } catch (error: any) {
+      const message =
+        error?.data?.error ?? error?.message ?? "Please check your credentials and try again.";
       toast({
         title: "Login failed",
-        description: error.error || "Please check your credentials and try again.",
+        description: message,
         variant: "destructive",
       });
       throw error;
@@ -65,12 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: RegisterInput) => {
     try {
       const res = await registerMutation.mutateAsync({ data });
-      queryClient.setQueryData(["/api/auth/me"], res.user);
+      queryClient.setQueryData(getGetMeQueryKey(), res.user);
       setLocation("/dashboard");
     } catch (error: any) {
+      const message =
+        error?.data?.error ?? error?.message ?? "An error occurred during registration.";
       toast({
         title: "Registration failed",
-        description: error.error || "An error occurred during registration.",
+        description: message,
         variant: "destructive",
       });
       throw error;
@@ -83,9 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       queryClient.clear();
       setLocation("/login");
     } catch (error: any) {
+      const message =
+        error?.data?.error ?? error?.message ?? "An error occurred during logout.";
       toast({
         title: "Logout failed",
-        description: error.error || "An error occurred during logout.",
+        description: message,
         variant: "destructive",
       });
     }

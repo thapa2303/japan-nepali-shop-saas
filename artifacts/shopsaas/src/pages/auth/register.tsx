@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { StorefrontLayout } from "@/components/layout/storefront-layout";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,20 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.roles.includes("PLATFORM_SUPER_ADMIN")) {
+        setLocation("/console");
+      } else if (user.roles.includes("MERCHANT") || user.roles.includes("TENANT_ADMIN")) {
+        setLocation("/dashboard");
+      } else {
+        setLocation("/");
+      }
+    }
+  }, [user, isLoading, setLocation]);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),

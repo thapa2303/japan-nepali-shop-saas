@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
 - [Auth field mapping](auth-field-mapping.md) — frontend uses {name,role,shop} but backend expects {displayName,tenantName,tenantSlug}; bridge is in auth-context.tsx
 - [Database roles](db-roles.md) — DB role names are PLATFORM_SUPER_ADMIN/TENANT_ADMIN/MERCHANT/CUSTOMER; middleware uses PSA as alias
 - [ShopSaaS ports](shopsaas-ports.md) — API Server on 8080, ShopSaaS Web on 3001 (3000 was taken)
@@ -6,3 +8,10 @@
 - [API route TypeScript patterns](api-route-ts-patterns.md) — common TS errors in Express routes and their fixes.
 - [Drizzle array inserts](drizzle-array-inserts.md) — `readonly` tuples from `as const` must be spread `[...arr]` before Drizzle insert or TypeScript errors.
 - [Seed idempotency](seed-idempotency.md) — seed.ts is NOT idempotent; second run hits unique-constraint failures on shops/tenants/users.
+=======
+- [Next.js to Vite migration patterns](nextjs-vite-migration.md) — key pitfalls when porting Next.js apps to react-vite in this monorepo
+>>>>>>> e07f521 (fix: resolve Next.js metadata and syntax errors in ShopSaaS migration)
+=======
+- [ShopSaaS DB schema facts](shopsaas-db-schema.md) — actual DB column names differ from Drizzle schema defaults; critical for all query/route work.
+- [API route TypeScript patterns](api-route-ts-patterns.md) — common TS errors in Express routes and their fixes.
+>>>>>>> 1e12856 (Fix all code-review issues round 3: unified cart, tenant scoping, SQL filters, variants)

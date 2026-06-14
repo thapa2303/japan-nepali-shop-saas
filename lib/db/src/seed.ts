@@ -92,25 +92,17 @@ async function main() {
   // ── Tenants ────────────────────────────────────────────────────────────────
   console.log("  → tenants");
 
+  // One demo tenant owns all 12 shops (task spec: 1 demo tenant, 12 shops)
   const tenantData = [
     { slug: "himalaya-asian-mart", name: "Himalaya Asian Mart", tier: "growth" as const, status: "active" as const },
-    { slug: "everest-nepali-kitchen", name: "Everest Nepali Kitchen", tier: "premium" as const, status: "active" as const },
-    { slug: "nepal-fashion-house", name: "Nepal Fashion House", tier: "starter" as const, status: "active" as const },
-    { slug: "kathmandu-handicrafts", name: "Kathmandu Handicrafts", tier: "growth" as const, status: "active" as const },
-    { slug: "annapurna-grocery-kawaguchi", name: "Annapurna Grocery", tier: "growth" as const, status: "active" as const },
-    { slug: "buddha-beauty-store", name: "Buddha Beauty & Wellness", tier: "starter" as const, status: "active" as const },
-    { slug: "sagarmatha-mart-yokohama", name: "Sagarmatha Mart", tier: "growth" as const, status: "active" as const },
-    { slug: "gorkha-spice-bazaar", name: "Gorkha Spice Bazaar", tier: "premium" as const, status: "active" as const },
-    { slug: "namaste-mart-nagoya", name: "Namaste Mart", tier: "growth" as const, status: "active" as const },
-    { slug: "lumbini-jewelers", name: "Lumbini Jewelers", tier: "starter" as const, status: "suspended" as const },
-    { slug: "pokhara-restaurant-mart", name: "Pokhara Restaurant & Mart", tier: "premium" as const, status: "active" as const },
-    { slug: "manakamana-electronics", name: "Manakamana Electronics", tier: "starter" as const, status: "pending" as const },
   ];
 
   const insertedTenants = await db
     .insert(schema.tenants)
     .values(tenantData)
     .returning();
+
+  const demoTenant = insertedTenants[0]!;
 
   // ── Platform Super Admin User ───────────────────────────────────────────────
   console.log("  → platform admin user");
@@ -132,36 +124,35 @@ async function main() {
     tenantId: null,
   });
 
-  // ── Merchant users (one per tenant) ───────────────────────────────────────
+  // ── Merchant users (2 users for the demo tenant) ─────────────────────────
   console.log("  → merchant users");
+  const merchantHash = await hash("password123");
   const merchantUsers = await db
     .insert(schema.users)
-    .values(
-      insertedTenants.map((t) => ({
-        tenantId: t.id,
-        email: `merchant@${t.slug}.jp`,
-        passwordHash: "", // will fill below
-        name: `${t.name} Owner`,
+    .values([
+      {
+        tenantId: demoTenant.id,
+        email: "merchant@himalaya-asian-mart.jp",
+        passwordHash: merchantHash,
+        name: "Himalaya Mart Owner",
         isVerified: true,
         isActive: true,
-      }))
-    )
+      },
+      {
+        tenantId: demoTenant.id,
+        email: "manager@himalaya-asian-mart.jp",
+        passwordHash: merchantHash,
+        name: "Himalaya Mart Manager",
+        isVerified: true,
+        isActive: true,
+      },
+    ])
     .returning();
 
-  // Set the demo merchant password
-  const demoMerchantHash = await hash("password123");
-  await pool.query(
-    `UPDATE users SET password_hash = $1 WHERE email LIKE 'merchant@%'`,
-    [demoMerchantHash]
-  );
-
-  for (const mu of merchantUsers) {
-    await db.insert(schema.userRoles).values({
-      userId: mu.id,
-      roleId: roleMerchant.id,
-      tenantId: mu.tenantId,
-    });
-  }
+  await db.insert(schema.userRoles).values([
+    { userId: merchantUsers[0]!.id, roleId: roleTenantAdmin.id, tenantId: demoTenant.id },
+    { userId: merchantUsers[1]!.id, roleId: roleMerchant.id, tenantId: demoTenant.id },
+  ]);
 
   // ── Demo customer ─────────────────────────────────────────────────────────
   console.log("  → customer user");
@@ -223,7 +214,7 @@ async function main() {
     newsletter: true,
   });
 
-  // ── Helper: index tenants by slug ─────────────────────────────────────────
+  // ── Helper: index tenants by slug (kept for order lookup below) ───────────
   const tenantBySlug = Object.fromEntries(
     insertedTenants.map((t) => [t.slug, t])
   );
@@ -647,7 +638,7 @@ async function main() {
     .insert(schema.shops)
     .values(
       shopSeeds.map((s) => ({
-        tenantId: tenantBySlug[s.slug]!.id,
+        tenantId: demoTenant.id,
         slug: s.slug,
         name: s.name,
         nameNepali: s.nameNepali,
@@ -1039,52 +1030,55 @@ async function main() {
     insertedProducts.map((p, idx) => [productSeeds[idx]!.mockId, p])
   );
 
-  // ── Subscriptions & invoices (for merchant tenants) ───────────────────────
+  // ── Subscription & invoices for the demo tenant ───────────────────────────
   console.log("  → tenant_subscriptions & invoices");
 
-  const planByTier = {
-    starter: planStarter,
-    growth: planGrowth,
-    premium: planPremium,
-  };
-
-  const now = new Date();
   const periodStart = new Date("2026-06-12");
   const periodEnd = new Date("2026-07-12");
 
-  for (const tenant of insertedTenants) {
-    const tier = tenant.subscriptionTier as "starter" | "growth" | "premium";
-    const plan = planByTier[tier];
-    const [sub] = await db
-      .insert(schema.tenantSubscriptions)
-      .values({
-        tenantId: tenant.id,
-        planId: plan.id,
-        status: tenant.status === "active" ? "active" : "trialing",
-        currentPeriodStart: periodStart,
-        currentPeriodEnd: periodEnd,
-      })
-      .returning();
+  const [demoSub] = await db
+    .insert(schema.tenantSubscriptions)
+    .values({
+      tenantId: demoTenant.id,
+      planId: planGrowth!.id,
+      status: "active",
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
+    })
+    .returning();
 
-    // Add 3 months of invoices for each tenant
-    const months = [
-      { num: "004", date: new Date("2026-04-12"), amount: plan.monthlyPrice, status: "paid" as const },
-      { num: "005", date: new Date("2026-05-12"), amount: plan.monthlyPrice, status: "paid" as const },
-      { num: "006", date: new Date("2026-06-12"), amount: plan.monthlyPrice, status: "paid" as const },
-    ];
-    await db.insert(schema.invoices).values(
-      months.map((m) => ({
-        invoiceNumber: `INV-${tenant.slug.substring(0, 6).toUpperCase()}-2026-${m.num}`,
-        tenantId: tenant.id,
-        subscriptionId: sub.id,
-        amount: m.amount,
-        status: m.status,
-        planName: `${plan.name} (Monthly)`,
-        issuedAt: m.date,
-        paidAt: m.status === "paid" ? m.date : null,
-      }))
-    );
-  }
+  await db.insert(schema.invoices).values([
+    {
+      invoiceNumber: "INV-HIMALA-2026-004",
+      tenantId: demoTenant.id,
+      subscriptionId: demoSub!.id,
+      amount: planGrowth!.monthlyPrice,
+      status: "paid",
+      planName: "Growth (Monthly)",
+      issuedAt: new Date("2026-04-12"),
+      paidAt: new Date("2026-04-12"),
+    },
+    {
+      invoiceNumber: "INV-HIMALA-2026-005",
+      tenantId: demoTenant.id,
+      subscriptionId: demoSub!.id,
+      amount: planGrowth!.monthlyPrice,
+      status: "paid",
+      planName: "Growth (Monthly)",
+      issuedAt: new Date("2026-05-12"),
+      paidAt: new Date("2026-05-12"),
+    },
+    {
+      invoiceNumber: "INV-HIMALA-2026-006",
+      tenantId: demoTenant.id,
+      subscriptionId: demoSub!.id,
+      amount: planGrowth!.monthlyPrice,
+      status: "paid",
+      planName: "Growth (Monthly)",
+      issuedAt: new Date("2026-06-12"),
+      paidAt: new Date("2026-06-12"),
+    },
+  ]);
 
   // ── Himalaya Asian Mart: demo orders ──────────────────────────────────────
   console.log("  → orders (Himalaya Asian Mart)");
