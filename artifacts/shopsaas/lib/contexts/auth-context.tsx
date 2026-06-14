@@ -27,6 +27,19 @@ export interface RegisterInput {
   }
 }
 
+interface BackendUser {
+  id: string
+  email: string
+  displayName: string
+  tenantId: string | null
+  roles: string[]
+}
+
+interface BackendLoginResponse {
+  user: BackendUser
+  token: string
+}
+
 interface AuthContextType {
   user: AuthUser | null
   loading: boolean
@@ -36,21 +49,45 @@ interface AuthContextType {
   refresh: () => Promise<void>
 }
 
+function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 50) || "shop"
+}
+
+function deriveRole(roles: string[]): AuthRole {
+  if (roles.includes("PLATFORM_SUPER_ADMIN") || roles.includes("PSA")) return "admin"
+  if (roles.includes("TENANT_ADMIN") || roles.includes("MERCHANT")) return "merchant"
+  return "customer"
+}
+
+function toAuthUser(u: BackendUser): AuthUser {
+  return {
+    id: u.id,
+    name: u.displayName,
+    email: u.email,
+    role: deriveRole(u.roles),
+    tenantId: u.tenantId,
+    roles: u.roles,
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Check the current session on mount via the cookie.
   const refresh = useCallback(async () => {
     try {
-      const me = await api.get<AuthUser>("/api/auth/me")
-      setUser(me)
+      const me = await api.get<BackendUser>("/api/auth/me")
+      setUser(toAuthUser(me))
     } catch (error) {
-      // 401 = not logged in, which is expected for guests.
       if (!(error instanceof ApiError) || error.status !== 401) {
-        console.error("[v0] auth refresh failed:", error)
+        console.error("[auth] refresh failed:", error)
       }
       setUser(null)
     } finally {
@@ -63,22 +100,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   const login = useCallback(async (email: string, password: string) => {
-    const loggedIn = await api.post<AuthUser>("/api/auth/login", { email, password })
-    setUser(loggedIn)
-    return loggedIn
+    const res = await api.post<BackendLoginResponse>("/api/auth/login", { email, password })
+    const authUser = toAuthUser(res.user)
+    setUser(authUser)
+    return authUser
   }, [])
 
   const register = useCallback(async (input: RegisterInput) => {
-    const created = await api.post<AuthUser>("/api/auth/register", input)
-    setUser(created)
-    return created
+    const tenantName = input.shop?.name ?? input.name
+    const baseSlug = slugify(input.shop?.name ?? input.email.split("@")[0])
+    const tenantSlug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`
+
+    const res = await api.post<BackendLoginResponse>("/api/auth/register", {
+      email: input.email,
+      password: input.password,
+      displayName: input.name,
+      tenantName,
+      tenantSlug,
+    })
+    const authUser = toAuthUser(res.user)
+    setUser(authUser)
+    return authUser
   }, [])
 
   const logout = useCallback(async () => {
     try {
       await api.post("/api/auth/logout")
     } catch (error) {
-      console.error("[v0] logout failed:", error)
+      console.error("[auth] logout failed:", error)
     }
     setUser(null)
   }, [])
@@ -93,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used inside AuthProvider")
   }
   return context
 }

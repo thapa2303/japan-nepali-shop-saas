@@ -1,0 +1,3 @@
+- [Auth field mapping](auth-field-mapping.md) — frontend uses {name,role,shop} but backend expects {displayName,tenantName,tenantSlug}; bridge is in auth-context.tsx
+- [Database roles](db-roles.md) — DB role names are PLATFORM_SUPER_ADMIN/TENANT_ADMIN/MERCHANT/CUSTOMER; middleware uses PSA as alias
+- [ShopSaaS ports](shopsaas-ports.md) — API Server on 8080, ShopSaaS Web on 3001 (3000 was taken)
