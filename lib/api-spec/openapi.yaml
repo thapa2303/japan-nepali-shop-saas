@@ -427,6 +427,82 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ─── COUPONS ────────────────────────────────────────────────────────────────
+
+  /coupons/validate:
+    post:
+      operationId: validateCoupon
+      tags: [coupons]
+      summary: Validate a coupon code for a shop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateCouponBody"
+      responses:
+        "200":
+          description: Coupon is valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateCouponResponse"
+        "400":
+          description: Coupon invalid or conditions not met
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Coupon not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /coupons/redeem:
+    post:
+      operationId: redeemCoupon
+      tags: [coupons]
+      summary: Increment usedCount on a coupon after an order is placed
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                couponId:
+                  type: string
+              required: [couponId]
+      responses:
+        "200":
+          description: Coupon redeemed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  usedCount:
+                    type: integer
+                required: [success, usedCount]
+        "400":
+          description: Coupon cannot be redeemed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Coupon not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ─── ACCOUNT ────────────────────────────────────────────────────────────────
 
   /account:
@@ -1896,6 +1972,44 @@ components:
         expiresAt:
           type: string
       required: [code, discountType, discountValue]
+
+    ValidateCouponBody:
+      type: object
+      properties:
+        code:
+          type: string
+        shopId:
+          type: string
+        orderAmount:
+          type: number
+      required: [code, orderAmount]
+
+    ValidateCouponResponse:
+      type: object
+      properties:
+        coupon:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            description:
+              type: string
+              nullable: true
+            discountType:
+              type: string
+            discountValue:
+              type: integer
+            minOrderAmount:
+              type: integer
+              nullable: true
+          required: [id, code, discountType, discountValue]
+        discountAmount:
+          type: integer
+        finalAmount:
+          type: integer
+      required: [coupon, discountAmount, finalAmount]
 
     StoreCategory:
       type: object

@@ -369,6 +369,42 @@ export const GetOrderResponse = zod.object({
 
 
 /**
+ * @summary Validate a coupon code for a shop
+ */
+export const ValidateCouponBody = zod.object({
+  "code": zod.string(),
+  "shopId": zod.string().optional(),
+  "orderAmount": zod.number()
+})
+
+export const ValidateCouponResponse = zod.object({
+  "coupon": zod.object({
+  "id": zod.string(),
+  "code": zod.string(),
+  "description": zod.string().nullish(),
+  "discountType": zod.string(),
+  "discountValue": zod.number(),
+  "minOrderAmount": zod.number().nullish()
+}),
+  "discountAmount": zod.number(),
+  "finalAmount": zod.number()
+})
+
+
+/**
+ * @summary Increment usedCount on a coupon after an order is placed
+ */
+export const RedeemCouponBody = zod.object({
+  "couponId": zod.string()
+})
+
+export const RedeemCouponResponse = zod.object({
+  "success": zod.boolean(),
+  "usedCount": zod.number()
+})
+
+
+/**
  * @summary Get current user account
  */
 export const GetAccountResponse = zod.object({

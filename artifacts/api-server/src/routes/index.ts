@@ -15,6 +15,7 @@ import dashboardRouter from "./dashboard.js";
 import consoleRouter from "./console.js";
 import tenantAdminRouter from "./tenant-admin.js";
 import uploadRouter from "./upload.js";
+import couponsRouter from "./coupons.js";
 
 const router: IRouter = Router();
 
@@ -28,6 +29,7 @@ router.use(locationsRouter);
 router.use(cartRouter);
 router.use(ordersRouter);
 router.use(accountRouter);
+router.use(couponsRouter);
 
 router.use(
   "/dashboard",
