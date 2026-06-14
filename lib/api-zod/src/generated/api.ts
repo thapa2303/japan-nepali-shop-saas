@@ -150,6 +150,27 @@ export const GetShopResponse = zod.object({
 
 
 /**
+ * @summary List visible store categories for a shop
+ */
+export const GetShopStoreCategoriesParams = zod.object({
+  "shopSlug": zod.coerce.string()
+})
+
+export const GetShopStoreCategoriesResponse = zod.object({
+  "categories": zod.array(zod.object({
+  "id": zod.string(),
+  "tenantId": zod.string(),
+  "shopId": zod.string(),
+  "name": zod.string(),
+  "sortOrder": zod.number(),
+  "isVisible": zod.boolean(),
+  "productCount": zod.number(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
  * @summary List products for a shop
  */
 export const GetProductsByShopParams = zod.object({
@@ -173,6 +194,7 @@ export const GetProductsByShopResponse = zod.object({
   "compareAtPrice": zod.number().nullish(),
   "category": zod.string(),
   "browseCategory": zod.string().nullish(),
+  "storeCategory": zod.string().nullish(),
   "inStock": zod.boolean(),
   "stockCount": zod.number().nullish(),
   "unit": zod.string().nullish(),
@@ -207,6 +229,7 @@ export const GetProductResponse = zod.object({
   "compareAtPrice": zod.number().nullish(),
   "category": zod.string(),
   "browseCategory": zod.string().nullish(),
+  "storeCategory": zod.string().nullish(),
   "inStock": zod.boolean(),
   "stockCount": zod.number().nullish(),
   "unit": zod.string().nullish(),
@@ -256,6 +279,7 @@ export const SearchResponse = zod.object({
   "compareAtPrice": zod.number().nullish(),
   "category": zod.string(),
   "browseCategory": zod.string().nullish(),
+  "storeCategory": zod.string().nullish(),
   "inStock": zod.boolean(),
   "stockCount": zod.number().nullish(),
   "unit": zod.string().nullish(),
@@ -555,6 +579,7 @@ export const ListDashboardProductsResponse = zod.object({
   "compareAtPrice": zod.number().nullish(),
   "category": zod.string(),
   "browseCategory": zod.string().nullish(),
+  "storeCategory": zod.string().nullish(),
   "inStock": zod.boolean(),
   "stockCount": zod.number().nullish(),
   "unit": zod.string().nullish(),
@@ -593,6 +618,7 @@ export const CreateDashboardProductResponse = zod.object({
   "compareAtPrice": zod.number().nullish(),
   "category": zod.string(),
   "browseCategory": zod.string().nullish(),
+  "storeCategory": zod.string().nullish(),
   "inStock": zod.boolean(),
   "stockCount": zod.number().nullish(),
   "unit": zod.string().nullish(),
@@ -634,6 +660,7 @@ export const UpdateDashboardProductResponse = zod.object({
   "compareAtPrice": zod.number().nullish(),
   "category": zod.string(),
   "browseCategory": zod.string().nullish(),
+  "storeCategory": zod.string().nullish(),
   "inStock": zod.boolean(),
   "stockCount": zod.number().nullish(),
   "unit": zod.string().nullish(),

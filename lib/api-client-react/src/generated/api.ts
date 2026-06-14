@@ -47,6 +47,7 @@ import type {
   GetDashboardAnalyticsParams,
   GetProductsByShop200,
   GetProductsByShopParams,
+  GetShopStoreCategories200,
   HealthStatus,
   ListAdminCustomers200,
   ListAdminCustomersParams,
@@ -617,6 +618,83 @@ export function useGetShop<TData = Awaited<ReturnType<typeof getShop>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetShopQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetShopStoreCategoriesUrl = (shopSlug: string,) => {
+
+
+
+
+  return `/api/shops/${shopSlug}/store-categories`
+}
+
+/**
+ * @summary List visible store categories for a shop
+ */
+export const getShopStoreCategories = async (shopSlug: string, options?: RequestInit): Promise<GetShopStoreCategories200> => {
+
+  return customFetch<GetShopStoreCategories200>(getGetShopStoreCategoriesUrl(shopSlug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetShopStoreCategoriesQueryKey = (shopSlug: string,) => {
+    return [
+    `/api/shops/${shopSlug}/store-categories`
+    ] as const;
+    }
+
+
+export const getGetShopStoreCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof getShopStoreCategories>>, TError = ErrorType<unknown>>(shopSlug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getShopStoreCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetShopStoreCategoriesQueryKey(shopSlug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getShopStoreCategories>>> = ({ signal }) => getShopStoreCategories(shopSlug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: shopSlug !== null && shopSlug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getShopStoreCategories>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetShopStoreCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof getShopStoreCategories>>>
+export type GetShopStoreCategoriesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List visible store categories for a shop
+ */
+
+export function useGetShopStoreCategories<TData = Awaited<ReturnType<typeof getShopStoreCategories>>, TError = ErrorType<unknown>>(
+ shopSlug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getShopStoreCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetShopStoreCategoriesQueryOptions(shopSlug,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

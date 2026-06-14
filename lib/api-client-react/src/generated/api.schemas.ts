@@ -117,6 +117,7 @@ export interface Product {
   compareAtPrice?: number | null;
   category: string;
   browseCategory?: string | null;
+  storeCategory?: string | null;
   inStock: boolean;
   stockCount?: number | null;
   unit?: string | null;
@@ -449,6 +450,10 @@ limit?: string;
 export type ListShops200 = {
   shops: Shop[];
   pagination: Pagination;
+};
+
+export type GetShopStoreCategories200 = {
+  categories: StoreCategory[];
 };
 
 export type GetProductsByShopParams = {

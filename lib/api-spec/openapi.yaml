@@ -202,6 +202,31 @@ paths:
 
   # ─── PRODUCTS ───────────────────────────────────────────────────────────────
 
+  /shops/{shopSlug}/store-categories:
+    get:
+      operationId: getShopStoreCategories
+      tags: [products]
+      summary: List visible store categories for a shop
+      parameters:
+        - in: path
+          name: shopSlug
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Store categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StoreCategory"
+                required: [categories]
+
   /shops/{shopSlug}/products:
     get:
       operationId: getProductsByShop
@@ -1497,6 +1522,9 @@ components:
         category:
           type: string
         browseCategory:
+          type: string
+          nullable: true
+        storeCategory:
           type: string
           nullable: true
         inStock:

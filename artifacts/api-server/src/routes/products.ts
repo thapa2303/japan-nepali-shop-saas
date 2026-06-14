@@ -1,7 +1,33 @@
 import { Router, type IRouter } from "express";
-import { db, products, shops, eq, and, desc, count } from "@workspace/db";
+import { db, products, shops, shopStoreCategories, eq, and, desc, count, asc } from "@workspace/db";
 
 const router: IRouter = Router();
+
+router.get("/shops/:shopSlug/store-categories", async (req, res): Promise<void> => {
+  const [shop] = await db.select().from(shops).where(eq(shops.slug, req.params.shopSlug));
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const cats = await db
+    .select()
+    .from(shopStoreCategories)
+    .where(and(eq(shopStoreCategories.shopId, shop.id), eq(shopStoreCategories.isVisible, true)))
+    .orderBy(asc(shopStoreCategories.sortOrder), asc(shopStoreCategories.createdAt));
+
+  const productCounts = await db
+    .select({ storeCategory: products.storeCategory, total: count() })
+    .from(products)
+    .where(and(eq(products.shopId, shop.id), eq(products.isActive, true)))
+    .groupBy(products.storeCategory);
+
+  const countMap: Record<string, number> = {};
+  for (const row of productCounts) {
+    if (row.storeCategory) countMap[row.storeCategory] = Number(row.total);
+  }
+
+  res.json({
+    categories: cats.map((c) => ({ ...c, productCount: countMap[c.name] ?? 0 })),
+  });
+});
 
 router.get("/shops/:shopSlug/products", async (req, res): Promise<void> => {
   const [shop] = await db.select().from(shops).where(eq(shops.slug, req.params.shopSlug));

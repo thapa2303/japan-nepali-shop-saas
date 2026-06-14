@@ -1,10 +1,19 @@
 import { useParams, Link } from "wouter";
-import { useGetShop, useGetProductsByShop, useAddCartItem, getGetCartQueryKey, getGetShopQueryKey, getGetProductsByShopQueryKey } from "@workspace/api-client-react";
+import { useState } from "react";
+import {
+  useGetShop,
+  useGetProductsByShop,
+  useGetShopStoreCategories,
+  useAddCartItem,
+  getGetCartQueryKey,
+  getGetShopQueryKey,
+  getGetProductsByShopQueryKey,
+} from "@workspace/api-client-react";
 import { StorefrontLayout } from "@/components/layout/storefront-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Store, MapPin, Clock, Plus, ShoppingBag } from "lucide-react";
+import { Store, MapPin, Clock, Plus, ShoppingBag, Package } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
@@ -15,6 +24,7 @@ export default function ShopDetailPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const { data: shop, isLoading: isShopLoading } = useGetShop(slug || "", {
     query: { queryKey: getGetShopQueryKey(slug || ""), enabled: !!slug }
@@ -24,6 +34,10 @@ export default function ShopDetailPage() {
     query: { queryKey: getGetProductsByShopQueryKey(slug || ""), enabled: !!slug }
   });
 
+  const { data: categoriesData } = useGetShopStoreCategories(slug || "", {
+    query: { enabled: !!slug }
+  });
+
   const addCartItem = useAddCartItem();
 
   const handleAddToCart = async (productId: string) => {
@@ -31,15 +45,22 @@ export default function ShopDetailPage() {
       toast({ title: "Please log in", description: "You need to log in to add items to your cart", variant: "destructive" });
       return;
     }
-    
     try {
       await addCartItem.mutateAsync({ data: { productId, quantity: 1 } });
       queryClient.invalidateQueries({ queryKey: getGetCartQueryKey() });
       toast({ title: "Added to cart", description: "Item has been added to your cart." });
-    } catch (error) {
+    } catch {
       toast({ title: "Error", description: "Failed to add item to cart.", variant: "destructive" });
     }
   };
+
+  const visibleCategories = categoriesData?.categories ?? [];
+  const hasCategories = visibleCategories.length > 0;
+
+  const allProducts = productsData?.products ?? [];
+  const filteredProducts = activeCategory
+    ? allProducts.filter((p) => p.storeCategory === activeCategory)
+    : allProducts;
 
   if (isShopLoading) {
     return (
@@ -93,7 +114,7 @@ export default function ShopDetailPage() {
                 </div>
               )}
             </div>
-            
+
             <div className="flex-1 pb-2">
               <div className="flex flex-wrap items-center gap-3 mb-2">
                 <Badge variant="secondary">{shop.category}</Badge>
@@ -105,7 +126,7 @@ export default function ShopDetailPage() {
               </div>
               <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-1">{shop.name}</h1>
               {shop.nameNepali && <p className="text-xl text-muted-foreground mb-3">{shop.nameNepali}</p>}
-              
+
               <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-muted-foreground">
                 {shop.area && (
                   <div className="flex items-center">
@@ -128,7 +149,7 @@ export default function ShopDetailPage() {
               </div>
             </div>
           </div>
-          
+
           {shop.description && (
             <div className="mt-8 max-w-3xl">
               <p className="text-foreground/80 leading-relaxed">{shop.description}</p>
@@ -139,7 +160,39 @@ export default function ShopDetailPage() {
 
       <div className="container mx-auto px-4 py-8">
         <h2 className="text-2xl font-display font-bold mb-6">Products</h2>
-        
+
+        {hasCategories && (
+          <div className="flex gap-2 flex-wrap mb-6">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                activeCategory === null
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted"
+              }`}
+            >
+              All
+              <span className="ml-1.5 text-xs opacity-70">({allProducts.length})</span>
+            </button>
+            {visibleCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.name === activeCategory ? null : cat.name)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  activeCategory === cat.name
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted"
+                }`}
+              >
+                {cat.name}
+                {cat.productCount > 0 && (
+                  <span className="ml-1.5 text-xs opacity-70">({cat.productCount})</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         {isProductsLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5].map(i => (
@@ -153,15 +206,24 @@ export default function ShopDetailPage() {
               </Card>
             ))}
           </div>
-        ) : productsData?.products?.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16 border rounded-xl bg-card border-dashed">
             <Package className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground">No products found</h3>
-            <p className="text-muted-foreground">This shop hasn't added any products yet.</p>
+            <h3 className="text-lg font-medium text-foreground">
+              {activeCategory ? `No products in "${activeCategory}"` : "No products found"}
+            </h3>
+            <p className="text-muted-foreground">
+              {activeCategory ? "Try another category or view all products." : "This shop hasn't added any products yet."}
+            </p>
+            {activeCategory && (
+              <Button variant="outline" className="mt-4" onClick={() => setActiveCategory(null)}>
+                View all products
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {productsData?.products?.map((product) => (
+            {filteredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden group flex flex-col">
                 <div className="p-4 flex-1">
                   <div className="mb-2 flex justify-between items-start">
@@ -172,14 +234,17 @@ export default function ShopDetailPage() {
                       {product.nameNepali && <p className="text-xs text-muted-foreground">{product.nameNepali}</p>}
                     </div>
                   </div>
+                  {product.storeCategory && (
+                    <Badge variant="outline" className="text-xs mb-2">{product.storeCategory}</Badge>
+                  )}
                   <div className="flex items-end gap-2 mt-2">
                     <span className="font-bold text-lg">¥{product.price.toLocaleString()}</span>
                     {product.unit && <span className="text-xs text-muted-foreground mb-1">/ {product.unit}</span>}
                   </div>
                 </div>
                 <div className="p-4 pt-0 mt-auto">
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     variant={product.inStock ? "default" : "secondary"}
                     disabled={!product.inStock || addCartItem.isPending}
                     onClick={() => handleAddToCart(product.id)}
@@ -201,6 +266,3 @@ export default function ShopDetailPage() {
     </StorefrontLayout>
   );
 }
-
-// Ensure the icon is imported
-import { Package } from "lucide-react";
