@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Tag, Pencil, Check, X, ChevronDown, ChevronRight, History } from "lucide-react";
+import { Trash2, Plus, Tag, Pencil, Check, X, ChevronDown, ChevronRight, History, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -91,6 +91,19 @@ export default function DashboardCouponsPage() {
       const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Failed to create coupon";
       toast({ title: msg, variant: "destructive" });
     }
+  };
+
+  const handleDuplicate = (coupon: CouponRow) => {
+    form.reset({
+      code: "",
+      description: "",
+      discountType: coupon.discountType as "percentage" | "fixed",
+      discountValue: coupon.discountValue,
+      minOrderAmount: coupon.minOrderAmount ?? undefined,
+      maxUses: coupon.maxUses ?? undefined,
+      expiresAt: "",
+    });
+    setOpen(true);
   };
 
   const handleDelete = async (id: string, code: string) => {
@@ -281,6 +294,7 @@ export default function DashboardCouponsPage() {
           onSaveExpiry={saveExpiry}
           onCancelEditExpiry={() => setEditingExpiry(null)}
           onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
           updatePending={updateCoupon.isPending}
           expandedCoupon={expandedCoupon}
           onToggleExpand={(id) => setExpandedCoupon(expandedCoupon === id ? null : id)}
@@ -301,6 +315,7 @@ export default function DashboardCouponsPage() {
             onSaveExpiry={saveExpiry}
             onCancelEditExpiry={() => setEditingExpiry(null)}
             onDelete={handleDelete}
+            onDuplicate={handleDuplicate}
             updatePending={updateCoupon.isPending}
             expandedCoupon={expandedCoupon}
             onToggleExpand={(id) => setExpandedCoupon(expandedCoupon === id ? null : id)}
@@ -407,6 +422,7 @@ function CouponTable({
   onSaveExpiry,
   onCancelEditExpiry,
   onDelete,
+  onDuplicate,
   updatePending,
   expandedCoupon,
   onToggleExpand,
@@ -424,6 +440,7 @@ function CouponTable({
   onSaveExpiry: (id: string) => void;
   onCancelEditExpiry: () => void;
   onDelete: (id: string, code: string) => void;
+  onDuplicate: (coupon: CouponRow) => void;
   updatePending: boolean;
   expandedCoupon: string | null;
   onToggleExpand: (id: string) => void;
@@ -448,7 +465,7 @@ function CouponTable({
               <TableHead>Usage</TableHead>
               <TableHead>Min Order</TableHead>
               <TableHead>Expires</TableHead>
-              <TableHead className="text-right">Delete</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -557,14 +574,26 @@ function CouponTable({
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => onDelete(coupon.id, coupon.code)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => onDuplicate(coupon)}
+                          title="Duplicate coupon"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => onDelete(coupon.id, coupon.code)}
+                          title="Delete coupon"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                   {expandedCoupon === coupon.id && (
