@@ -5,12 +5,16 @@ import {
   orderItems,
   coupons,
   users,
+  userRoles,
+  roles,
+  notifications,
   shops,
   products,
   carts,
   cartItems,
   eq,
   and,
+  or,
   desc,
   sql,
 } from "@workspace/db";
@@ -281,7 +285,12 @@ async function handleCreateOrder(req: Request, res: Response): Promise<void> {
 
           // Re-check after increment: if the coupon had a maxUses and we just hit it, pause it.
           const [updatedCoupon] = await tx
-            .select({ usedCount: coupons.usedCount, maxUses: coupons.maxUses })
+            .select({
+              usedCount: coupons.usedCount,
+              maxUses: coupons.maxUses,
+              code: coupons.code,
+              tenantId: coupons.tenantId,
+            })
             .from(coupons)
             .where(eq(coupons.id, resolvedCouponId))
             .limit(1);
@@ -294,6 +303,34 @@ async function handleCreateOrder(req: Request, res: Response): Promise<void> {
               .update(coupons)
               .set({ isActive: false })
               .where(eq(coupons.id, resolvedCouponId));
+
+            // Notify all TENANT_ADMIN and MERCHANT users for this tenant that the coupon was auto-paused.
+            const merchantUsers = await tx
+              .select({ userId: userRoles.userId })
+              .from(userRoles)
+              .innerJoin(roles, eq(userRoles.roleId, roles.id))
+              .where(
+                and(
+                  eq(userRoles.tenantId, updatedCoupon.tenantId),
+                  or(eq(roles.name, "TENANT_ADMIN"), eq(roles.name, "MERCHANT"))
+                )
+              );
+
+            if (merchantUsers.length > 0) {
+              await tx.insert(notifications).values(
+                merchantUsers.map((mu) => ({
+                  userId: mu.userId,
+                  title: "Coupon auto-paused",
+                  body: `Your coupon "${updatedCoupon.code}" has reached its usage limit (${updatedCoupon.maxUses} uses) and has been automatically paused.`,
+                  type: "warning",
+                  metadata: {
+                    couponId: resolvedCouponId,
+                    couponCode: updatedCoupon.code,
+                    maxUses: updatedCoupon.maxUses,
+                  } as Record<string, unknown>,
+                }))
+              );
+            }
           }
         }
 

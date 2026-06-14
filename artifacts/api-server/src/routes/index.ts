@@ -16,6 +16,7 @@ import consoleRouter from "./console.js";
 import tenantAdminRouter from "./tenant-admin.js";
 import uploadRouter from "./upload.js";
 import couponsRouter from "./coupons.js";
+import notificationsRouter from "./notifications.js";
 
 const router: IRouter = Router();
 
@@ -30,6 +31,7 @@ router.use(cartRouter);
 router.use(ordersRouter);
 router.use(accountRouter);
 router.use(couponsRouter);
+router.use(notificationsRouter);
 
 router.use(
   "/dashboard",
