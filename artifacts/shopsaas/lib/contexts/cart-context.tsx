@@ -53,7 +53,10 @@ const EMPTY_CART: ApiCart = {
 }
 
 function getApiBase(): string {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
+  if (typeof window === "undefined") {
+    return "http://localhost:8080"
+  }
+  return ""
 }
 
 async function cartRequest<T>(url: string, init?: RequestInit): Promise<T> {

@@ -8,7 +8,7 @@ import router from "./routes/index.js";
 export function createApp() {
   const app = express();
 
-  app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
+  app.set("trust proxy", 1);
 
   app.use(
     cors({

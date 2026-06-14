@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { MapPin, Menu, ShoppingBag, Store, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { SearchBar } from "@/components/layout/search-bar"
 import { CartIcon } from "@/components/cart/cart-icon"
 import { useState } from "react"
@@ -81,6 +81,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[350px]">
+              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
               <div className="flex flex-col gap-6 pt-6">
                 <SearchBar onSearch={() => setMobileMenuOpen(false)} />
                 

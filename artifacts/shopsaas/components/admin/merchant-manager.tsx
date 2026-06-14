@@ -239,12 +239,12 @@ export function MerchantManager() {
 
       <Dialog open={!!reviewing} onOpenChange={(open) => !open && setReviewing(null)}>
         <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{reviewing?.name ?? "Merchant details"}</DialogTitle>
+            <DialogDescription>{reviewing ? `Tenant ID: ${reviewing.id}` : ""}</DialogDescription>
+          </DialogHeader>
           {reviewing ? (
             <>
-              <DialogHeader>
-                <DialogTitle>{reviewing.name}</DialogTitle>
-                <DialogDescription>Tenant ID: {reviewing.id}</DialogDescription>
-              </DialogHeader>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status</span>
