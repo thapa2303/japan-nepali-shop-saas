@@ -5,6 +5,7 @@ import {
   useRemoveCartItem,
   useValidateCoupon,
   useCheckout,
+  useListShops,
   getGetCartQueryKey,
   type ValidateCouponResponse,
 } from "@workspace/api-client-react";
@@ -12,22 +13,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, ShoppingBag, Tag, X, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Trash2, ShoppingBag, Tag, X, Loader2, Store } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 
 export default function CartPage() {
   const { data: cart, isLoading } = useGetCart();
+  const { data: shopsData } = useListShops();
   const removeItem = useRemoveCartItem();
   const validateCoupon = useValidateCoupon();
   const checkoutMutation = useCheckout();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [selectedShopId, setSelectedShopId] = useState<string>("");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResponse | null>(null);
   const [isApplying, setIsApplying] = useState(false);
+
+  const shops = shopsData?.shops ?? [];
+  const activeShopId = appliedCoupon?.coupon.shopId ?? selectedShopId;
 
   const subtotal = cart?.items?.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
   const discountAmount = appliedCoupon?.discountAmount ?? 0;
@@ -49,14 +62,34 @@ export default function CartPage() {
     }
   };
 
+  const handleShopChange = (shopId: string) => {
+    setSelectedShopId(shopId);
+    // Clear coupon when shop changes — coupon must belong to the selected shop
+    if (appliedCoupon && appliedCoupon.coupon.shopId !== shopId) {
+      setAppliedCoupon(null);
+      setCouponCode("");
+      toast({ title: "Coupon removed", description: "Coupon was for a different shop." });
+    }
+  };
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
+    if (!activeShopId) {
+      toast({
+        title: "Select a shop first",
+        description: "Choose which shop you're ordering from before applying a coupon.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsApplying(true);
     try {
       const result = await validateCoupon.mutateAsync({
-        data: { code: couponCode.trim(), orderAmount: subtotal },
+        data: { code: couponCode.trim(), shopId: activeShopId, orderAmount: subtotal },
       });
       setAppliedCoupon(result);
+      // Sync the shop selector to match the coupon's shop
+      setSelectedShopId(result.coupon.shopId);
       toast({
         title: "Coupon applied!",
         description: `${result.coupon.code} — saving ¥${result.discountAmount.toLocaleString()}`,
@@ -79,10 +112,10 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    if (!appliedCoupon) {
+    if (!activeShopId) {
       toast({
-        title: "No shop selected",
-        description: "Please apply a coupon from a shop before checking out.",
+        title: "Select a shop",
+        description: "Choose which shop you're ordering from before checking out.",
         variant: "destructive",
       });
       return;
@@ -90,16 +123,17 @@ export default function CartPage() {
     try {
       const result = await checkoutMutation.mutateAsync({
         data: {
-          shopId: appliedCoupon.coupon.shopId,
+          shopId: activeShopId,
           subtotal,
-          couponId: appliedCoupon.coupon.id,
+          ...(appliedCoupon ? { couponId: appliedCoupon.coupon.id } : {}),
         },
       });
       toast({
         title: "Order placed!",
-        description: result.discountAmount > 0
-          ? `Order #${result.order.orderNumber} — you saved ¥${result.discountAmount.toLocaleString()}.`
-          : `Order #${result.order.orderNumber} has been placed successfully.`,
+        description:
+          result.discountAmount > 0
+            ? `Order #${result.order.orderNumber} — you saved ¥${result.discountAmount.toLocaleString()}.`
+            : `Order #${result.order.orderNumber} has been placed successfully.`,
       });
       setAppliedCoupon(null);
       setCouponCode("");
@@ -165,6 +199,35 @@ export default function CartPage() {
               <Card className="sticky top-24">
                 <CardContent className="p-6 space-y-5">
                   <h3 className="font-semibold text-lg">Order Summary</h3>
+
+                  {/* Shop selector */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
+                      <Store className="h-3.5 w-3.5" /> Ordering from
+                    </p>
+                    {appliedCoupon ? (
+                      <div className="text-sm font-medium px-3 py-2 rounded-md border bg-muted/50">
+                        {shops.find((s) => s.id === appliedCoupon.coupon.shopId)?.name ??
+                          "Selected shop"}
+                      </div>
+                    ) : (
+                      <Select
+                        value={selectedShopId}
+                        onValueChange={handleShopChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a shop…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {shops.map((shop) => (
+                            <SelectItem key={shop.id} value={shop.id}>
+                              {shop.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
 
                   {/* Coupon input or applied badge */}
                   {!appliedCoupon ? (
@@ -241,7 +304,9 @@ export default function CartPage() {
                     )}
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Delivery</span>
-                      <span className="text-xs text-muted-foreground">Calculated at checkout</span>
+                      <span className="text-xs text-muted-foreground">
+                        Calculated at checkout
+                      </span>
                     </div>
                   </div>
 
@@ -249,7 +314,11 @@ export default function CartPage() {
                   <div className="border-t pt-4">
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span className={appliedCoupon ? "text-emerald-700 dark:text-emerald-400" : ""}>
+                      <span
+                        className={
+                          appliedCoupon ? "text-emerald-700 dark:text-emerald-400" : ""
+                        }
+                      >
                         ¥{total.toLocaleString()}
                       </span>
                     </div>
@@ -264,7 +333,7 @@ export default function CartPage() {
                     className="w-full"
                     size="lg"
                     onClick={handleCheckout}
-                    disabled={checkoutMutation.isPending}
+                    disabled={checkoutMutation.isPending || !activeShopId}
                   >
                     {checkoutMutation.isPending ? (
                       <>
@@ -275,6 +344,12 @@ export default function CartPage() {
                       "Proceed to Checkout"
                     )}
                   </Button>
+
+                  {!activeShopId && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Select a shop above to enable checkout
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>

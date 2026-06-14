@@ -400,7 +400,7 @@ export const CheckoutResponse = zod.object({
  */
 export const ValidateCouponBody = zod.object({
   "code": zod.string(),
-  "shopId": zod.string().optional(),
+  "shopId": zod.string(),
   "orderAmount": zod.number()
 })
 

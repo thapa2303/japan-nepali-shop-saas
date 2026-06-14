@@ -402,7 +402,7 @@ export interface CheckoutResponse {
 
 export interface ValidateCouponBody {
   code: string;
-  shopId?: string;
+  shopId: string;
   orderAmount: number;
 }
 

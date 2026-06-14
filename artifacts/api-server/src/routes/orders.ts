@@ -6,6 +6,8 @@ import {
   coupons,
   users,
   shops,
+  carts,
+  cartItems,
   eq,
   and,
   desc,
@@ -40,146 +42,230 @@ router.get("/orders", authenticate, async (req: Request, res: Response): Promise
 });
 
 // POST /api/orders/checkout
-// Atomic: validate coupon → create order → increment coupon usedCount — all in one transaction.
-// shopId MUST be supplied by the client and verified server-side (tenantId is always derived from
-// the DB shop row — the client never provides tenantId).
-// NOTE: subtotal is currently client-supplied because the server-side cart is a stub.  Once a
-// real server-side cart is implemented this should be replaced by summing cart items in the DB.
-router.post("/orders/checkout", authenticate, async (req: Request, res: Response): Promise<void> => {
-  const userId = req.user!.id;
-  const {
-    shopId,
-    couponId,
-    subtotal: rawSubtotal,
-    customerName: rawName,
-    customerPhone = "N/A",
-    deliveryAddress = "TBD",
-    paymentMethod = "cod",
-  } = req.body as {
-    shopId?: string;
-    couponId?: string;
-    subtotal?: number;
-    customerName?: string;
-    customerPhone?: string;
-    deliveryAddress?: string;
-    paymentMethod?: "cod" | "paypay" | "credit-card" | "bank-transfer";
-  };
+// Atomic: resolve shopId → validate coupon → create order → increment coupon usedCount
+//
+// shopId resolution priority (server-side, not blindly trusting client):
+//   1. Cart items  — if the user has items in DB, derive shopId from them
+//                    (enforces single-shop invariant: all items must share one shop)
+//   2. Coupon      — if coupon provided and cart is empty, use coupon.shopId
+//   3. body.shopId — explicit fallback for empty-cart / coupon-free checkout
+//
+// NOTE: subtotal is currently client-supplied because the cart is a stub with no price data.
+// Once products are added to cart items with price, compute it server-side from cart rows.
+router.post(
+  "/orders/checkout",
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user!.id;
+    const {
+      shopId: bodyShopId,
+      couponId,
+      subtotal: rawSubtotal,
+      customerName: rawName,
+      customerPhone = "N/A",
+      deliveryAddress = "TBD",
+      paymentMethod = "cod",
+    } = req.body as {
+      shopId?: string;
+      couponId?: string;
+      subtotal?: number;
+      customerName?: string;
+      customerPhone?: string;
+      deliveryAddress?: string;
+      paymentMethod?: "cod" | "paypay" | "credit-card" | "bank-transfer";
+    };
 
-  // shopId is required — the client must tell us which shop this order is for.
-  if (!shopId) {
-    res.status(400).json({ error: "shopId is required" });
-    return;
-  }
+    // Validate subtotal
+    if (typeof rawSubtotal !== "number" || rawSubtotal < 0 || rawSubtotal > 10_000_000) {
+      res
+        .status(400)
+        .json({ error: "subtotal must be a non-negative number up to ¥10,000,000" });
+      return;
+    }
+    const subtotal = Math.round(rawSubtotal);
 
-  // subtotal must be a positive integer (yen)
-  if (typeof rawSubtotal !== "number" || rawSubtotal < 0 || rawSubtotal > 10_000_000) {
-    res.status(400).json({ error: "subtotal must be a non-negative number up to ¥10,000,000" });
-    return;
-  }
-  const subtotal = Math.round(rawSubtotal);
+    // ── Resolve shopId ────────────────────────────────────────────────────────
+    // Priority 1: derive from user's DB cart items (authoritative, single-shop invariant)
+    let resolvedShopId: string | null = null;
 
-  // Verify the shop exists server-side and retrieve its tenantId — client never supplies tenantId.
-  const [shop] = await db
-    .select({ id: shops.id, tenantId: shops.tenantId, isActive: shops.isActive })
-    .from(shops)
-    .where(eq(shops.id, shopId))
-    .limit(1);
+    const userCart = await db
+      .select({ id: carts.id })
+      .from(carts)
+      .where(eq(carts.userId, userId))
+      .limit(1);
 
-  if (!shop || !shop.isActive) {
-    res.status(404).json({ error: "Shop not found or inactive" });
-    return;
-  }
+    if (userCart.length > 0) {
+      const cartShops = await db
+        .selectDistinct({ shopId: cartItems.shopId })
+        .from(cartItems)
+        .where(eq(cartItems.cartId, userCart[0].id));
 
-  // Fetch user for customerName fallback
-  const [user] = await db
-    .select({ email: users.email, name: users.name })
-    .from(users)
-    .where(eq(users.id, userId));
-  const customerName = rawName || user?.name || user?.email?.split("@")[0] || "Customer";
-
-  let discountAmount = 0;
-  let resolvedCouponId: string | null = null;
-
-  try {
-    await db.transaction(async (tx) => {
-      if (couponId) {
-        // Re-validate inside the transaction for race-condition safety
-        const [coupon] = await tx.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
-
-        if (!coupon || !coupon.isActive) {
-          throw Object.assign(new Error("Coupon not found or inactive"), { status: 404 });
-        }
-
-        // Enforce that the coupon belongs to the shop being ordered from — prevents cross-shop coupon abuse
-        if (coupon.shopId !== shopId) {
-          throw Object.assign(
-            new Error("This coupon is not valid for the selected shop"),
-            { status: 400 }
-          );
-        }
-
-        if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
-          throw Object.assign(new Error("This coupon has expired"), { status: 400 });
-        }
-        if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
-          throw Object.assign(new Error("This coupon has reached its maximum uses"), { status: 400 });
-        }
-        if (coupon.minOrderAmount != null && subtotal < coupon.minOrderAmount) {
-          throw Object.assign(
-            new Error(`Minimum order amount for this coupon is ¥${coupon.minOrderAmount.toLocaleString()}`),
-            { status: 400 }
-          );
-        }
-
-        if (coupon.discountType === "percentage") {
-          discountAmount = Math.round((subtotal * coupon.discountValue) / 100);
-        } else {
-          discountAmount = Math.min(coupon.discountValue, subtotal);
-        }
-
-        resolvedCouponId = coupon.id;
+      if (cartShops.length > 1) {
+        res.status(400).json({
+          error: "Your cart contains items from multiple shops. Please checkout one shop at a time.",
+        });
+        return;
       }
-
-      const orderNumber = `ORD-${Date.now().toString(36).toUpperCase().slice(-6)}`;
-      const total = Math.max(0, subtotal - discountAmount);
-
-      const [newOrder] = await tx
-        .insert(orders)
-        .values({
-          orderNumber,
-          tenantId: shop.tenantId,
-          shopId: shop.id,
-          customerId: userId,
-          customerName,
-          customerPhone,
-          deliveryAddress,
-          subtotal,
-          deliveryFee: 0,
-          total,
-          paymentMethod: (paymentMethod ?? "cod") as "cod" | "paypay" | "credit-card" | "bank-transfer",
-          couponId: resolvedCouponId,
-          discountAmount,
-        })
-        .returning();
-
-      // Atomically increment coupon usedCount using SQL expression (safe under concurrency)
-      if (resolvedCouponId) {
-        await tx
-          .update(coupons)
-          .set({ usedCount: sql`${coupons.usedCount} + 1` })
-          .where(eq(coupons.id, resolvedCouponId));
+      if (cartShops.length === 1) {
+        resolvedShopId = cartShops[0].shopId;
       }
+    }
 
-      res.status(201).json({
-        order: newOrder,
-        discountAmount,
-        couponId: resolvedCouponId,
+    // Priority 2: explicit body.shopId
+    // Always apply when provided — including alongside a coupon so we can enforce
+    // coupon.shopId === body.shopId inside the transaction.
+    if (!resolvedShopId && bodyShopId) {
+      resolvedShopId = bodyShopId;
+    }
+
+    // If we still have no shopId and no coupon, we can't proceed
+    if (!resolvedShopId && !couponId) {
+      res.status(400).json({
+        error:
+          "Unable to determine which shop to order from. Add items to your cart or select a shop.",
       });
-    });
-  } catch (err: unknown) {
-    const e = err as { status?: number; message?: string };
-    res.status(e.status ?? 500).json({ error: e.message ?? "Checkout failed" });
+      return;
+    }
+
+    // Verify the resolved shop exists and is active (server-side, not trusting client)
+    let shop: { id: string; tenantId: string; isActive: boolean } | null = null;
+    if (resolvedShopId) {
+      const [row] = await db
+        .select({ id: shops.id, tenantId: shops.tenantId, isActive: shops.isActive })
+        .from(shops)
+        .where(eq(shops.id, resolvedShopId))
+        .limit(1);
+      if (!row || !row.isActive) {
+        res.status(404).json({ error: "Shop not found or inactive" });
+        return;
+      }
+      shop = row;
+    }
+
+    // Fetch user for customerName fallback
+    const [user] = await db
+      .select({ email: users.email, name: users.name })
+      .from(users)
+      .where(eq(users.id, userId));
+    const customerName =
+      rawName || user?.name || user?.email?.split("@")[0] || "Customer";
+
+    let discountAmount = 0;
+    let resolvedCouponId: string | null = null;
+
+    try {
+      await db.transaction(async (tx) => {
+        if (couponId) {
+          const [coupon] = await tx
+            .select()
+            .from(coupons)
+            .where(eq(coupons.id, couponId))
+            .limit(1);
+
+          if (!coupon || !coupon.isActive) {
+            throw Object.assign(new Error("Coupon not found or inactive"), { status: 404 });
+          }
+
+          // If shopId was already resolved from cart items, ensure the coupon belongs to it
+          if (resolvedShopId && coupon.shopId !== resolvedShopId) {
+            throw Object.assign(
+              new Error("This coupon is not valid for the selected shop"),
+              { status: 400 }
+            );
+          }
+
+          // Priority 2: use coupon's shop when cart is empty
+          if (!resolvedShopId) {
+            const [couponShop] = await tx
+              .select({ id: shops.id, tenantId: shops.tenantId, isActive: shops.isActive })
+              .from(shops)
+              .where(eq(shops.id, coupon.shopId))
+              .limit(1);
+            if (!couponShop || !couponShop.isActive) {
+              throw Object.assign(new Error("Coupon's shop is not active"), { status: 400 });
+            }
+            resolvedShopId = couponShop.id;
+            shop = couponShop;
+          }
+
+          if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+            throw Object.assign(new Error("This coupon has expired"), { status: 400 });
+          }
+          if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
+            throw Object.assign(
+              new Error("This coupon has reached its maximum uses"),
+              { status: 400 }
+            );
+          }
+          if (coupon.minOrderAmount != null && subtotal < coupon.minOrderAmount) {
+            throw Object.assign(
+              new Error(
+                `Minimum order amount for this coupon is ¥${coupon.minOrderAmount.toLocaleString()}`
+              ),
+              { status: 400 }
+            );
+          }
+
+          if (coupon.discountType === "percentage") {
+            discountAmount = Math.round((subtotal * coupon.discountValue) / 100);
+          } else {
+            discountAmount = Math.min(coupon.discountValue, subtotal);
+          }
+
+          resolvedCouponId = coupon.id;
+        }
+
+        if (!shop || !resolvedShopId) {
+          throw Object.assign(new Error("Unable to determine shop for this order"), { status: 400 });
+        }
+
+        const orderNumber = `ORD-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+        const total = Math.max(0, subtotal - discountAmount);
+
+        const [newOrder] = await tx
+          .insert(orders)
+          .values({
+            orderNumber,
+            tenantId: shop.tenantId,
+            shopId: shop.id,
+            customerId: userId,
+            customerName,
+            customerPhone,
+            deliveryAddress,
+            subtotal,
+            deliveryFee: 0,
+            total,
+            paymentMethod: (paymentMethod ?? "cod") as
+              | "cod"
+              | "paypay"
+              | "credit-card"
+              | "bank-transfer",
+            couponId: resolvedCouponId,
+            discountAmount,
+          })
+          .returning();
+
+        // Atomically increment coupon usedCount using SQL expression (safe under concurrency)
+        if (resolvedCouponId) {
+          await tx
+            .update(coupons)
+            .set({ usedCount: sql`${coupons.usedCount} + 1` })
+            .where(eq(coupons.id, resolvedCouponId));
+        }
+
+        res.status(201).json({
+          order: newOrder,
+          discountAmount,
+          couponId: resolvedCouponId,
+        });
+      });
+    } catch (err: unknown) {
+      const e = err as { status?: number; message?: string };
+      if (!res.headersSent) {
+        res.status(e.status ?? 500).json({ error: e.message ?? "Checkout failed" });
+      }
+    }
   }
-});
+);
 
 export default router;

@@ -2017,7 +2017,7 @@ components:
           type: string
         orderAmount:
           type: number
-      required: [code, orderAmount]
+      required: [code, shopId, orderAmount]
 
     ValidateCouponResponse:
       type: object

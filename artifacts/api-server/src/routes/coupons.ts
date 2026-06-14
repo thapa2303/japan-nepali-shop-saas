@@ -4,8 +4,9 @@ import { db, coupons, eq, and, sql } from "@workspace/db";
 const router: IRouter = Router();
 
 // POST /api/coupons/validate
-// Public — no auth required. Validates a coupon code and returns discount info.
-// shopId is optional — if omitted, matches the first active coupon across all shops.
+// Public — no auth required. Validates a coupon code against a specific shop and returns
+// discount info. shopId is required: the caller must know which shop the coupon is for.
+// This ensures a coupon for Shop A cannot accidentally be "previewed" as belonging to Shop B.
 // Redemption (incrementing usedCount) is handled atomically inside POST /api/orders/checkout.
 router.post("/coupons/validate", async (req: Request, res: Response): Promise<void> => {
   const { code, shopId, orderAmount } = req.body as {
@@ -18,6 +19,10 @@ router.post("/coupons/validate", async (req: Request, res: Response): Promise<vo
     res.status(400).json({ error: "code is required" });
     return;
   }
+  if (!shopId) {
+    res.status(400).json({ error: "shopId is required" });
+    return;
+  }
   if (typeof orderAmount !== "number" || orderAmount < 0) {
     res.status(400).json({ error: "orderAmount must be a non-negative number" });
     return;
@@ -25,9 +30,11 @@ router.post("/coupons/validate", async (req: Request, res: Response): Promise<vo
 
   const uppercaseCode = code.trim().toUpperCase();
 
-  const whereClause = shopId
-    ? and(eq(coupons.shopId, shopId), eq(sql`UPPER(${coupons.code})`, uppercaseCode), eq(coupons.isActive, true))
-    : and(eq(sql`UPPER(${coupons.code})`, uppercaseCode), eq(coupons.isActive, true));
+  const whereClause = and(
+    eq(coupons.shopId, shopId),
+    eq(sql`UPPER(${coupons.code})`, uppercaseCode),
+    eq(coupons.isActive, true)
+  );
 
   const [coupon] = await db
     .select()
