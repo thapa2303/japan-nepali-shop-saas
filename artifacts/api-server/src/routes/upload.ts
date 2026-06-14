@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
-import { Storage } from "@google-cloud/storage";
+import fs from "fs";
 import { authenticate } from "../middleware/authenticate.js";
 import { logger } from "../lib/logger.js";
 
@@ -30,6 +30,11 @@ function getExt(mimetype: string): string {
   return "jpg";
 }
 
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
 router.post(
   "/upload",
   authenticate,
@@ -54,35 +59,27 @@ router.post(
       return;
     }
 
-    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
-    if (!bucketId) {
-      res.status(500).json({ error: "Object storage not configured" });
-      return;
-    }
-
-    const tenantCode = req.user?.tenantId ?? "platform";
     const ext = getExt(file.mimetype);
     const uuid = randomUUID();
     const type = (req.query.type as string) || "products";
-    const objectPath = `tenants/${tenantCode}/${type}/${uuid}.${ext}`;
+    const filename = `${uuid}.${ext}`;
+    const subdir = path.join(UPLOADS_DIR, type);
+
+    if (!fs.existsSync(subdir)) {
+      fs.mkdirSync(subdir, { recursive: true });
+    }
+
+    const filePath = path.join(subdir, filename);
 
     try {
-      const storage = new Storage();
-      const bucket = storage.bucket(bucketId);
-      const blob = bucket.file(objectPath);
+      fs.writeFileSync(filePath, file.buffer);
 
-      await blob.save(file.buffer, {
-        metadata: { contentType: file.mimetype },
-        resumable: false,
-      });
+      const publicUrl = `/uploads/${type}/${filename}`;
 
-      await blob.makePublic();
-
-      const publicUrl = `https://storage.googleapis.com/${bucketId}/${objectPath}`;
-
-      res.json({ url: publicUrl, path: objectPath });
+      logger.info({ path: filePath }, "File uploaded to local disk");
+      res.json({ url: publicUrl, path: filePath });
     } catch (err) {
-      logger.error({ err }, "Failed to upload file to object storage");
+      logger.error({ err }, "Failed to save uploaded file");
       res.status(500).json({ error: "Failed to store file" });
     }
   }
