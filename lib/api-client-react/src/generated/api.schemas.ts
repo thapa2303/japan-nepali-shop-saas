@@ -376,8 +376,9 @@ export interface CreateCouponBody {
 }
 
 export interface CheckoutBody {
+  shopId: string;
   couponId?: string;
-  subtotal?: number;
+  subtotal: number;
   customerName?: string;
   customerPhone?: string;
   deliveryAddress?: string;
@@ -408,6 +409,7 @@ export interface ValidateCouponBody {
 export type ValidateCouponResponseCoupon = {
   id: string;
   code: string;
+  shopId: string;
   description?: string | null;
   discountType: string;
   discountValue: number;

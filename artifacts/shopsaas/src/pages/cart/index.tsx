@@ -79,11 +79,20 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
+    if (!appliedCoupon) {
+      toast({
+        title: "No shop selected",
+        description: "Please apply a coupon from a shop before checking out.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       const result = await checkoutMutation.mutateAsync({
         data: {
+          shopId: appliedCoupon.coupon.shopId,
           subtotal,
-          ...(appliedCoupon ? { couponId: appliedCoupon.coupon.id } : {}),
+          couponId: appliedCoupon.coupon.id,
         },
       });
       toast({

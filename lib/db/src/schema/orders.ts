@@ -12,6 +12,7 @@ import { users, tenants } from "./identity.js";
 import { shops } from "./shops.js";
 import { products } from "./products.js";
 import { productVariants } from "./products.js";
+import { coupons } from "./promotions.js";
 import {
   orderStatusEnum,
   paymentMethodEnum,
@@ -81,6 +82,8 @@ export const orders = pgTable(
     deliveryCity: varchar("delivery_city", { length: 100 }),
     deliveryBuilding: varchar("delivery_building", { length: 255 }),
     subtotal: integer("subtotal").notNull(),
+    couponId: uuid("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
+    discountAmount: integer("discount_amount").notNull().default(0),
     deliveryFee: integer("delivery_fee").notNull().default(0),
     total: integer("total").notNull(),
     status: orderStatusEnum("status").notNull().default("pending"),

@@ -1966,6 +1966,8 @@ components:
     CheckoutBody:
       type: object
       properties:
+        shopId:
+          type: string
         couponId:
           type: string
         subtotal:
@@ -1978,7 +1980,7 @@ components:
           type: string
         paymentMethod:
           type: string
-      required: []
+      required: [shopId, subtotal]
 
     CheckoutResponse:
       type: object
@@ -2027,6 +2029,8 @@ components:
               type: string
             code:
               type: string
+            shopId:
+              type: string
             description:
               type: string
               nullable: true
@@ -2037,7 +2041,7 @@ components:
             minOrderAmount:
               type: integer
               nullable: true
-          required: [id, code, discountType, discountValue]
+          required: [id, code, shopId, discountType, discountValue]
         discountAmount:
           type: integer
         finalAmount:

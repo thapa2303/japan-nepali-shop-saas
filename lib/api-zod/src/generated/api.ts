@@ -372,8 +372,9 @@ export const GetOrderResponse = zod.object({
  * @summary Place an order, optionally applying a coupon atomically
  */
 export const CheckoutBody = zod.object({
+  "shopId": zod.string(),
   "couponId": zod.string().optional(),
-  "subtotal": zod.number().optional(),
+  "subtotal": zod.number(),
   "customerName": zod.string().optional(),
   "customerPhone": zod.string().optional(),
   "deliveryAddress": zod.string().optional(),
@@ -407,6 +408,7 @@ export const ValidateCouponResponse = zod.object({
   "coupon": zod.object({
   "id": zod.string(),
   "code": zod.string(),
+  "shopId": zod.string(),
   "description": zod.string().nullish(),
   "discountType": zod.string(),
   "discountValue": zod.number(),

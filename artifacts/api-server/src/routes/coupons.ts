@@ -68,6 +68,7 @@ router.post("/coupons/validate", async (req: Request, res: Response): Promise<vo
     coupon: {
       id: coupon.id,
       code: coupon.code,
+      shopId: coupon.shopId,
       description: coupon.description,
       discountType: coupon.discountType,
       discountValue: coupon.discountValue,
