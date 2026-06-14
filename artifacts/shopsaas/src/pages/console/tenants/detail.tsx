@@ -1,5 +1,5 @@
 import { ConsoleLayout } from "@/components/layout/console-layout";
-import { useListConsoleTenants, useUpdateConsoleTenant, useEnterConsoleTenant } from "@workspace/api-client-react";
+import { useListConsoleTenants, useUpdateConsoleTenant, useEnterConsoleTenant, useListConsolePlans } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ConsoleTenantDetailPage() {
   const { id } = useParams();
   const { data, isLoading } = useListConsoleTenants();
+  const { data: plansData } = useListConsolePlans();
   const updateTenant = useUpdateConsoleTenant();
   const enterTenant = useEnterConsoleTenant();
+  const plans = plansData?.plans ?? [];
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,10 +104,11 @@ export default function ConsoleTenantDetailPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="FREE">Free</SelectItem>
-                      <SelectItem value="BASIC">Basic</SelectItem>
-                      <SelectItem value="PRO">Pro</SelectItem>
-                      <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
+                      {plans.map((p) => (
+                        <SelectItem key={p.tier} value={p.tier}>
+                          {p.name} — ¥{p.monthlyPrice.toLocaleString()}/mo
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

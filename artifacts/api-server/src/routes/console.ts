@@ -22,15 +22,10 @@ import {
 import { authenticate, signToken } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { writeAuditLog } from "../lib/audit.js";
+import { getAllPlans } from "../lib/plan-limits.js";
 
 const router: IRouter = Router();
 const AUTH = [authenticate, authorize("PSA")] as const;
-
-const PLAN_MRR: Record<string, number> = {
-  starter: 2980,
-  growth: 5980,
-  premium: 11800,
-};
 
 // GET /api/console/tenants
 router.get("/console/tenants", ...AUTH, async (req: Request, res: Response): Promise<void> => {
@@ -78,6 +73,9 @@ router.get("/console/tenants", ...AUTH, async (req: Request, res: Response): Pro
   for (const r of productCounts) if (r.tenantId) productMap[r.tenantId] = Number(r.cnt);
   for (const r of userCounts) if (r.tenantId) userMap[r.tenantId] = Number(r.cnt);
 
+  const allPlans = await getAllPlans();
+  const planPriceMap: Record<string, number> = Object.fromEntries(allPlans.map((p) => [p.tier, p.monthlyPrice]));
+
   const result = tenantList.map((t) => ({
     id: t.id,
     slug: t.slug,
@@ -90,7 +88,7 @@ router.get("/console/tenants", ...AUTH, async (req: Request, res: Response): Pro
     userCount: userMap[t.id] ?? 0,
     orderCount: orderMap[t.id]?.orders ?? 0,
     revenue: orderMap[t.id]?.revenue ?? 0,
-    mrr: PLAN_MRR[t.subscriptionTier] ?? 0,
+    mrr: planPriceMap[t.subscriptionTier] ?? 0,
   }));
 
   res.json({ tenants: result, pagination: { page: pageNum, limit: limitNum } });
@@ -230,9 +228,8 @@ router.get("/console/analytics", ...AUTH, async (req: Request, res: Response): P
   const tierCounts: Record<string, number> = {};
   for (const t of tierStats) tierCounts[t.tier] = Number(t.cnt);
 
-  const mrr = Object.entries(PLAN_MRR).reduce((s, [tier, price]) => {
-    return s + (tierCounts[tier] ?? 0) * price;
-  }, 0);
+  const plans = await getAllPlans();
+  const mrr = plans.reduce((s, p) => s + (tierCounts[p.tier] ?? 0) * p.monthlyPrice, 0);
 
   res.json({
     totalMerchants: Number(stats.total),
@@ -333,6 +330,12 @@ router.get("/console/audit-logs", ...AUTH, async (req: Request, res: Response): 
     })),
     pagination: { page: pageNum, limit: limitNum, total: Number(total), pages: Math.ceil(Number(total) / limitNum) },
   });
+});
+
+// GET /api/console/plans — list all subscription plans from the DB
+router.get("/console/plans", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const plans = await getAllPlans();
+  res.json({ plans });
 });
 
 export default router;

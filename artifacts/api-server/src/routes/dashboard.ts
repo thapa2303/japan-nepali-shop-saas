@@ -26,16 +26,11 @@ import {
 import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { writeAuditLog } from "../lib/audit.js";
+import { getPlanForTier, getAllPlans } from "../lib/plan-limits.js";
 
 const router: IRouter = Router();
 
 const AUTH = [authenticate, authorize("MERCHANT")] as const;
-
-const PLAN_LIMITS: Record<string, { productLimit: number; commissionRate: number; monthlyPrice: number; name: string }> = {
-  starter: { productLimit: 30, commissionRate: 8, monthlyPrice: 2980, name: "Starter" },
-  growth: { productLimit: 150, commissionRate: 5, monthlyPrice: 5980, name: "Growth" },
-  premium: { productLimit: 999, commissionRate: 3, monthlyPrice: 11800, name: "Premium" },
-};
 
 async function getMerchantShop(tenantId: string) {
   const [shop] = await db
@@ -125,7 +120,7 @@ router.post("/products", ...AUTH, async (req: Request, res: Response): Promise<v
 
   const [tenant] = await db.select().from(tenants).where(eq(tenants.id, tenantId));
   const tier = tenant?.subscriptionTier ?? "starter";
-  const limits = PLAN_LIMITS[tier] ?? PLAN_LIMITS.starter;
+  const limits = await getPlanForTier(tier);
 
   const [{ total }] = await db
     .select({ total: count() })
@@ -442,7 +437,10 @@ router.get("/subscription", ...AUTH, async (req: Request, res: Response): Promis
   if (!tenant) { res.status(404).json({ error: "Tenant not found" }); return; }
 
   const tier = tenant.subscriptionTier;
-  const limits = PLAN_LIMITS[tier] ?? PLAN_LIMITS.starter;
+  const [limits, allPlans] = await Promise.all([
+    getPlanForTier(tier),
+    getAllPlans(),
+  ]);
 
   const shop = await getMerchantShop(tenantId);
 
@@ -472,8 +470,8 @@ router.get("/subscription", ...AUTH, async (req: Request, res: Response): Promis
     productLimit: limits.productLimit,
     currentProductCount: Number(productCount?.total ?? 0),
     staffCount: staffRows.length,
-    plans: Object.entries(PLAN_LIMITS).map(([t, p]) => ({
-      tier: t,
+    plans: allPlans.map((p) => ({
+      tier: p.tier,
       name: p.name,
       monthlyPrice: p.monthlyPrice,
       productLimit: p.productLimit,

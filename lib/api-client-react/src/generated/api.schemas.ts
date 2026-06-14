@@ -250,6 +250,8 @@ export interface SubscriptionPlan {
   monthlyPrice: number;
   productLimit: number;
   commissionRate: number;
+  features: string[];
+  highlighted: boolean;
 }
 
 export interface SubscriptionInfo {
@@ -598,6 +600,10 @@ limit?: string;
 export type ListConsoleCustomers200 = {
   customers: CustomerSummary[];
   pagination: Pagination;
+};
+
+export type ListConsolePlans200 = {
+  plans: SubscriptionPlan[];
 };
 
 export type ListConsoleAuditLogsParams = {

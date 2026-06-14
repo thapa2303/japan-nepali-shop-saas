@@ -16,19 +16,11 @@ import {
 import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { writeAuditLog } from "../lib/audit.js";
+import { getPlanForTier } from "../lib/plan-limits.js";
 
 const router: IRouter = Router();
 
 const AUTH = [authenticate, authorize("MERCHANT")] as const;
-
-const PLAN_LIMITS: Record<
-  string,
-  { productLimit: number; commissionRate: number; monthlyPrice: number; name: string }
-> = {
-  starter: { productLimit: 30, commissionRate: 8, monthlyPrice: 2980, name: "Starter" },
-  growth: { productLimit: 150, commissionRate: 5, monthlyPrice: 5980, name: "Growth" },
-  premium: { productLimit: 999, commissionRate: 3, monthlyPrice: 11800, name: "Premium" },
-};
 
 async function getMerchantShop(tenantId: string) {
   const [shop] = await db
@@ -368,7 +360,7 @@ router.post(
       .from(tenants)
       .where(eq(tenants.id, tenantId));
     const tier = tenant?.subscriptionTier ?? "starter";
-    const limits = PLAN_LIMITS[tier] ?? PLAN_LIMITS.starter!;
+    const limits = await getPlanForTier(tier);
 
     const [{ total }] = await db
       .select({ total: count() })

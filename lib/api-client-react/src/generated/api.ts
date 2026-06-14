@@ -54,6 +54,7 @@ import type {
   ListConsoleAuditLogsParams,
   ListConsoleCustomers200,
   ListConsoleCustomersParams,
+  ListConsolePlans200,
   ListConsoleTenants200,
   ListConsoleTenantsParams,
   ListDashboardCoupons200,
@@ -3607,6 +3608,83 @@ export function useListConsoleCustomers<TData = Awaited<ReturnType<typeof listCo
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListConsoleCustomersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListConsolePlansUrl = () => {
+
+
+
+
+  return `/api/console/plans`
+}
+
+/**
+ * @summary List all active subscription plans
+ */
+export const listConsolePlans = async ( options?: RequestInit): Promise<ListConsolePlans200> => {
+
+  return customFetch<ListConsolePlans200>(getListConsolePlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListConsolePlansQueryKey = () => {
+    return [
+    `/api/console/plans`
+    ] as const;
+    }
+
+
+export const getListConsolePlansQueryOptions = <TData = Awaited<ReturnType<typeof listConsolePlans>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listConsolePlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConsolePlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConsolePlans>>> = ({ signal }) => listConsolePlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConsolePlans>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListConsolePlansQueryResult = NonNullable<Awaited<ReturnType<typeof listConsolePlans>>>
+export type ListConsolePlansQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List all active subscription plans
+ */
+
+export function useListConsolePlans<TData = Awaited<ReturnType<typeof listConsolePlans>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listConsolePlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListConsolePlansQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

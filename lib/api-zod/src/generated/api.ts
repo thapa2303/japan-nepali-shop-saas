@@ -783,7 +783,9 @@ export const GetDashboardSubscriptionResponse = zod.object({
   "name": zod.string(),
   "monthlyPrice": zod.number(),
   "productLimit": zod.number(),
-  "commissionRate": zod.number()
+  "commissionRate": zod.number(),
+  "features": zod.array(zod.string()),
+  "highlighted": zod.boolean()
 }))
 })
 
@@ -1119,6 +1121,22 @@ export const ListConsoleCustomersResponse = zod.object({
   "total": zod.number().optional(),
   "pages": zod.number().optional()
 })
+})
+
+
+/**
+ * @summary List all active subscription plans
+ */
+export const ListConsolePlansResponse = zod.object({
+  "plans": zod.array(zod.object({
+  "tier": zod.string(),
+  "name": zod.string(),
+  "monthlyPrice": zod.number(),
+  "productLimit": zod.number(),
+  "commissionRate": zod.number(),
+  "features": zod.array(zod.string()),
+  "highlighted": zod.boolean()
+}))
 })
 
 

@@ -1123,6 +1123,37 @@ paths:
                     $ref: "#/components/schemas/Pagination"
                 required: [customers, pagination]
 
+  /console/plans:
+    get:
+      operationId: listConsolePlans
+      tags: [console]
+      summary: List all active subscription plans
+      responses:
+        "200":
+          description: List of subscription plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SubscriptionPlan"
+                required: [plans]
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /console/audit-logs:
     get:
       operationId: listConsoleAuditLogs
@@ -1708,7 +1739,13 @@ components:
           type: integer
         commissionRate:
           type: integer
-      required: [tier, name, monthlyPrice, productLimit, commissionRate]
+        features:
+          type: array
+          items:
+            type: string
+        highlighted:
+          type: boolean
+      required: [tier, name, monthlyPrice, productLimit, commissionRate, features, highlighted]
 
     SubscriptionInfo:
       type: object
