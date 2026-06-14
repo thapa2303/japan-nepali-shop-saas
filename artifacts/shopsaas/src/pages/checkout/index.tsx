@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { StorefrontLayout } from "@/components/layout/storefront-layout";
 import {
   useGetCart,
-  useCheckout,
+  useCreateOrder,
   useListShops,
   getGetCartQueryKey,
   type ValidateCouponResponse,
@@ -58,7 +58,7 @@ export default function CheckoutPage() {
 
   const { data: cart, isLoading: cartLoading } = useGetCart();
   const { data: shopsData } = useListShops();
-  const checkoutMutation = useCheckout();
+  const createOrderMutation = useCreateOrder();
 
   const [ctx, setCtx] = useState<CheckoutContext | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -99,7 +99,7 @@ export default function CheckoutPage() {
     }
 
     try {
-      const result = await checkoutMutation.mutateAsync({
+      const result = await createOrderMutation.mutateAsync({
         data: {
           shopId: ctx.shopId,
           subtotal,
@@ -309,9 +309,9 @@ export default function CheckoutPage() {
                     className="w-full"
                     size="lg"
                     onClick={handlePlaceOrder}
-                    disabled={checkoutMutation.isPending || !deliveryAddress.trim()}
+                    disabled={createOrderMutation.isPending || !deliveryAddress.trim()}
                   >
-                    {checkoutMutation.isPending ? (
+                    {createOrderMutation.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Placing order…

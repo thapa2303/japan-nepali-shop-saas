@@ -42,7 +42,7 @@ router.get("/orders", authenticate, async (req: Request, res: Response): Promise
   res.json({ orders: rows });
 });
 
-// POST /api/orders/checkout
+// Shared handler for POST /api/orders and POST /api/orders/checkout
 // Atomic: resolve shopId → validate coupon → create order → increment coupon usedCount
 //
 // shopId resolution priority (server-side, not blindly trusting client):
@@ -51,12 +51,8 @@ router.get("/orders", authenticate, async (req: Request, res: Response): Promise
 //   2. Coupon      — if coupon provided and cart is empty, use coupon.shopId
 //   3. body.shopId — explicit fallback for empty-cart / coupon-free checkout
 //
-// NOTE: subtotal is currently client-supplied because the cart is a stub with no price data.
-// Once products are added to cart items with price, compute it server-side from cart rows.
-router.post(
-  "/orders/checkout",
-  authenticate,
-  async (req: Request, res: Response): Promise<void> => {
+// Subtotal is computed server-side from DB cart prices; client value used as fallback only.
+async function handleCreateOrder(req: Request, res: Response): Promise<void> {
     const userId = req.user!.id;
     const {
       shopId: bodyShopId,
@@ -315,7 +311,12 @@ router.post(
         res.status(e.status ?? 500).json({ error: e.message ?? "Checkout failed" });
       }
     }
-  }
-);
+}
+
+// POST /api/orders — create an order (primary, per-spec endpoint)
+router.post("/orders", authenticate, handleCreateOrder);
+
+// POST /api/orders/checkout — legacy alias for backwards compatibility
+router.post("/orders/checkout", authenticate, handleCreateOrder);
 
 export default router;

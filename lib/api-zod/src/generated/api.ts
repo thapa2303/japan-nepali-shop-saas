@@ -339,6 +339,33 @@ export const ListOrdersResponse = zod.object({
 
 
 /**
+ * @summary Create an order (checkout)
+ */
+export const CreateOrderBody = zod.object({
+  "shopId": zod.string(),
+  "couponId": zod.string().optional(),
+  "subtotal": zod.number(),
+  "customerName": zod.string().optional(),
+  "customerPhone": zod.string().optional(),
+  "deliveryAddress": zod.string().optional(),
+  "paymentMethod": zod.string().optional()
+})
+
+export const CreateOrderResponse = zod.object({
+  "order": zod.object({
+  "id": zod.string(),
+  "orderNumber": zod.string(),
+  "total": zod.number(),
+  "subtotal": zod.number(),
+  "status": zod.string(),
+  "createdAt": zod.string().optional()
+}),
+  "discountAmount": zod.number(),
+  "couponId": zod.string().nullish()
+})
+
+
+/**
  * @summary Get an order by ID
  */
 export const GetOrderParams = zod.object({
