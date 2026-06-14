@@ -617,6 +617,33 @@ router.post("/coupons", ...AUTH, async (req: Request, res: Response): Promise<vo
   res.status(201).json(coupon);
 });
 
+// GET /api/dashboard/coupons/:id/redemptions
+router.get("/coupons/:id/redemptions", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+  const id = String(req.params.id);
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const [existing] = await db.select().from(coupons).where(and(eq(coupons.id, id), eq(coupons.shopId, shop.id)));
+  if (!existing) { res.status(404).json({ error: "Coupon not found" }); return; }
+
+  const redemptions = await db
+    .select({
+      orderId: orders.id,
+      orderNumber: orders.orderNumber,
+      customerName: orders.customerName,
+      orderDate: orders.createdAt,
+      discountAmount: orders.discountAmount,
+    })
+    .from(orders)
+    .where(and(eq(orders.couponId, id), eq(orders.shopId, shop.id), eq(orders.tenantId, tenantId)))
+    .orderBy(desc(orders.createdAt));
+
+  res.json({ redemptions });
+});
+
 // PUT /api/dashboard/coupons/:id
 router.put("/coupons/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;

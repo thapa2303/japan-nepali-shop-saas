@@ -896,6 +896,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Coupon"
 
+  /dashboard/coupons/{id}/redemptions:
+    get:
+      operationId: getDashboardCouponRedemptions
+      tags: [dashboard]
+      summary: Get redemption history for a coupon
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Redemption history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redemptions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CouponRedemption"
+                required: [redemptions]
+
   /dashboard/coupons/{id}:
     put:
       operationId: updateDashboardCoupon
@@ -2025,6 +2050,21 @@ components:
         revenue:
           type: integer
       required: [shopCount, productCount, orderCount, revenue]
+
+    CouponRedemption:
+      type: object
+      properties:
+        orderId:
+          type: string
+        orderNumber:
+          type: string
+        customerName:
+          type: string
+        orderDate:
+          type: string
+        discountAmount:
+          type: integer
+      required: [orderId, orderNumber, customerName, orderDate, discountAmount]
 
     Coupon:
       type: object

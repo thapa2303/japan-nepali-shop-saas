@@ -352,6 +352,14 @@ export interface AdminOverview {
   revenue: number;
 }
 
+export interface CouponRedemption {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  orderDate: string;
+  discountAmount: number;
+}
+
 export interface Coupon {
   id: string;
   tenantId: string;
@@ -548,6 +556,10 @@ export type DeleteDashboardStaff200 = {
 
 export type ListDashboardCoupons200 = {
   coupons: Coupon[];
+};
+
+export type GetDashboardCouponRedemptions200 = {
+  redemptions: CouponRedemption[];
 };
 
 export type DeleteDashboardCoupon200 = {

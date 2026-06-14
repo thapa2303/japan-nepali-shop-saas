@@ -946,6 +946,24 @@ export const CreateDashboardCouponResponse = zod.object({
 
 
 /**
+ * @summary Get redemption history for a coupon
+ */
+export const GetDashboardCouponRedemptionsParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetDashboardCouponRedemptionsResponse = zod.object({
+  "redemptions": zod.array(zod.object({
+  "orderId": zod.string(),
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "orderDate": zod.string(),
+  "discountAmount": zod.number()
+}))
+})
+
+
+/**
  * @summary Update a coupon (toggle active, set expiry)
  */
 export const UpdateDashboardCouponParams = zod.object({

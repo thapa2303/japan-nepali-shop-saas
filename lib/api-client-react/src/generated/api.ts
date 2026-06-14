@@ -45,6 +45,7 @@ import type {
   ErrorResponse,
   GetCart200,
   GetDashboardAnalyticsParams,
+  GetDashboardCouponRedemptions200,
   GetProductsByShop200,
   GetProductsByShopParams,
   GetShopStoreCategories200,
@@ -2954,6 +2955,83 @@ export const useCreateDashboardCoupon = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateDashboardCouponMutationOptions(options));
     }
+
+export const getGetDashboardCouponRedemptionsUrl = (id: string,) => {
+
+
+
+
+  return `/api/dashboard/coupons/${id}/redemptions`
+}
+
+/**
+ * @summary Get redemption history for a coupon
+ */
+export const getDashboardCouponRedemptions = async (id: string, options?: RequestInit): Promise<GetDashboardCouponRedemptions200> => {
+
+  return customFetch<GetDashboardCouponRedemptions200>(getGetDashboardCouponRedemptionsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDashboardCouponRedemptionsQueryKey = (id: string,) => {
+    return [
+    `/api/dashboard/coupons/${id}/redemptions`
+    ] as const;
+    }
+
+
+export const getGetDashboardCouponRedemptionsQueryOptions = <TData = Awaited<ReturnType<typeof getDashboardCouponRedemptions>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardCouponRedemptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDashboardCouponRedemptionsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboardCouponRedemptions>>> = ({ signal }) => getDashboardCouponRedemptions(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDashboardCouponRedemptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDashboardCouponRedemptionsQueryResult = NonNullable<Awaited<ReturnType<typeof getDashboardCouponRedemptions>>>
+export type GetDashboardCouponRedemptionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get redemption history for a coupon
+ */
+
+export function useGetDashboardCouponRedemptions<TData = Awaited<ReturnType<typeof getDashboardCouponRedemptions>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardCouponRedemptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDashboardCouponRedemptionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getUpdateDashboardCouponUrl = (id: string,) => {
 

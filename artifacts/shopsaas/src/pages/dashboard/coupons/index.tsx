@@ -4,6 +4,7 @@ import {
   useCreateDashboardCoupon,
   useDeleteDashboardCoupon,
   useUpdateDashboardCoupon,
+  useGetDashboardCouponRedemptions,
   getListDashboardCouponsQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Tag, Pencil, Check, X } from "lucide-react";
+import { Trash2, Plus, Tag, Pencil, Check, X, ChevronDown, ChevronRight, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -52,6 +53,7 @@ export default function DashboardCouponsPage() {
   const [open, setOpen] = useState(false);
   const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
   const [expiryDraft, setExpiryDraft] = useState("");
+  const [expandedCoupon, setExpandedCoupon] = useState<string | null>(null);
 
   const form = useForm<CouponFormValues>({
     resolver: zodResolver(couponSchema),
@@ -280,6 +282,8 @@ export default function DashboardCouponsPage() {
           onCancelEditExpiry={() => setEditingExpiry(null)}
           onDelete={handleDelete}
           updatePending={updateCoupon.isPending}
+          expandedCoupon={expandedCoupon}
+          onToggleExpand={(id) => setExpandedCoupon(expandedCoupon === id ? null : id)}
         />
 
         {inactiveCoupons.length > 0 && (
@@ -298,6 +302,8 @@ export default function DashboardCouponsPage() {
             onCancelEditExpiry={() => setEditingExpiry(null)}
             onDelete={handleDelete}
             updatePending={updateCoupon.isPending}
+            expandedCoupon={expandedCoupon}
+            onToggleExpand={(id) => setExpandedCoupon(expandedCoupon === id ? null : id)}
           />
         )}
       </div>
@@ -318,6 +324,75 @@ type CouponRow = {
   isActive: boolean;
 };
 
+function RedemptionHistory({ couponId }: { couponId: string }) {
+  const { data, isLoading, isError } = useGetDashboardCouponRedemptions(couponId);
+
+  if (isLoading) {
+    return (
+      <div className="py-4 px-6 text-sm text-muted-foreground">
+        Loading redemptions...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="py-4 px-6 text-sm text-destructive">
+        Failed to load redemptions. Please try again.
+      </div>
+    );
+  }
+
+  const redemptions = data?.redemptions ?? [];
+
+  if (redemptions.length === 0) {
+    return (
+      <div className="py-6 px-6 flex items-center gap-2 text-sm text-muted-foreground">
+        <History className="h-4 w-4 opacity-50" />
+        No redemptions yet — this coupon hasn't been used on any orders.
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t bg-muted/30">
+      <div className="px-6 pt-3 pb-1">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Redemption History</p>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="pl-6 text-xs">Order #</TableHead>
+            <TableHead className="text-xs">Customer</TableHead>
+            <TableHead className="text-xs">Date</TableHead>
+            <TableHead className="text-xs text-right pr-6">Discount Applied</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {redemptions.map((r) => (
+            <TableRow key={r.orderId} className="hover:bg-transparent">
+              <TableCell className="pl-6 py-2">
+                <span className="font-mono text-xs font-medium">{r.orderNumber}</span>
+              </TableCell>
+              <TableCell className="py-2 text-sm">{r.customerName}</TableCell>
+              <TableCell className="py-2 text-sm text-muted-foreground">
+                {new Date(r.orderDate).toLocaleDateString("en-JP", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </TableCell>
+              <TableCell className="py-2 text-right pr-6 text-sm font-medium text-green-700">
+                −¥{r.discountAmount.toLocaleString()}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 function CouponTable({
   title,
   description,
@@ -333,6 +408,8 @@ function CouponTable({
   onCancelEditExpiry,
   onDelete,
   updatePending,
+  expandedCoupon,
+  onToggleExpand,
 }: {
   title: string;
   description: string;
@@ -348,6 +425,8 @@ function CouponTable({
   onCancelEditExpiry: () => void;
   onDelete: (id: string, code: string) => void;
   updatePending: boolean;
+  expandedCoupon: string | null;
+  onToggleExpand: (id: string) => void;
 }) {
   return (
     <Card>
@@ -362,6 +441,7 @@ function CouponTable({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8"></TableHead>
               <TableHead>Active</TableHead>
               <TableHead>Code</TableHead>
               <TableHead>Discount</TableHead>
@@ -374,13 +454,13 @@ function CouponTable({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Loading coupons...
                 </TableCell>
               </TableRow>
             ) : coupons.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <Tag className="h-8 w-8 opacity-40" />
                     <p>{emptyMessage}</p>
@@ -389,83 +469,112 @@ function CouponTable({
               </TableRow>
             ) : (
               coupons.map((coupon) => (
-                <TableRow key={coupon.id} className={!coupon.isActive ? "opacity-60" : ""}>
-                  <TableCell>
-                    {coupon.maxUses != null && coupon.usedCount >= coupon.maxUses ? (
-                      <Badge variant="outline" className="text-xs font-medium text-orange-600 border-orange-300 bg-orange-50 whitespace-nowrap">
-                        Limit reached
-                      </Badge>
-                    ) : (
-                      <Switch
-                        checked={coupon.isActive}
-                        onCheckedChange={() => onToggleActive(coupon.id, coupon.isActive)}
-                        disabled={updatePending}
-                        aria-label={coupon.isActive ? "Pause coupon" : "Activate coupon"}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono font-semibold tracking-wider">{coupon.code}</span>
-                    {coupon.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{coupon.description}</p>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {coupon.discountType === "percentage"
-                        ? `${coupon.discountValue}% off`
-                        : `¥${coupon.discountValue.toLocaleString()} off`}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {coupon.usedCount}
-                      {coupon.maxUses ? ` / ${coupon.maxUses}` : ""}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {coupon.minOrderAmount ? `¥${coupon.minOrderAmount.toLocaleString()}` : "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {editingExpiry === coupon.id ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          type="datetime-local"
-                          value={expiryDraft}
-                          onChange={(e) => onExpiryDraftChange(e.target.value)}
-                          className="h-7 text-xs w-44"
-                        />
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={() => onSaveExpiry(coupon.id)} disabled={updatePending}>
-                          <Check className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onCancelEditExpiry}>
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ) : (
+                <>
+                  <TableRow key={coupon.id} className={!coupon.isActive ? "opacity-60" : ""}>
+                    <TableCell className="pl-4 pr-0">
                       <button
-                        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground group"
-                        onClick={() => onStartEditExpiry(coupon.id, coupon.expiresAt)}
-                        title="Click to edit expiry date"
+                        onClick={() => onToggleExpand(coupon.id)}
+                        className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                        title={expandedCoupon === coupon.id ? "Hide redemptions" : "Show redemptions"}
                       >
-                        <span>{coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString("en-JP") : "Never"}</span>
-                        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                        {expandedCoupon === coupon.id
+                          ? <ChevronDown className="h-4 w-4" />
+                          : <ChevronRight className="h-4 w-4" />}
                       </button>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => onDelete(coupon.id, coupon.code)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                    </TableCell>
+                    <TableCell>
+                      {coupon.maxUses != null && coupon.usedCount >= coupon.maxUses ? (
+                        <Badge variant="outline" className="text-xs font-medium text-orange-600 border-orange-300 bg-orange-50 whitespace-nowrap">
+                          Limit reached
+                        </Badge>
+                      ) : (
+                        <Switch
+                          checked={coupon.isActive}
+                          onCheckedChange={() => onToggleActive(coupon.id, coupon.isActive)}
+                          disabled={updatePending}
+                          aria-label={coupon.isActive ? "Pause coupon" : "Activate coupon"}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono font-semibold tracking-wider">{coupon.code}</span>
+                      {coupon.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{coupon.description}</p>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {coupon.discountType === "percentage"
+                          ? `${coupon.discountValue}% off`
+                          : `¥${coupon.discountValue.toLocaleString()} off`}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        className="flex items-center gap-1.5 text-sm hover:text-foreground transition-colors group"
+                        onClick={() => onToggleExpand(coupon.id)}
+                        title="View redemptions"
+                      >
+                        <span className={coupon.usedCount > 0 ? "font-medium" : "text-muted-foreground"}>
+                          {coupon.usedCount}
+                          {coupon.maxUses ? ` / ${coupon.maxUses}` : ""}
+                        </span>
+                        {coupon.usedCount > 0 && (
+                          <History className="h-3 w-3 text-muted-foreground group-hover:text-foreground opacity-60 transition-opacity" />
+                        )}
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {coupon.minOrderAmount ? `¥${coupon.minOrderAmount.toLocaleString()}` : "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {editingExpiry === coupon.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="datetime-local"
+                            value={expiryDraft}
+                            onChange={(e) => onExpiryDraftChange(e.target.value)}
+                            className="h-7 text-xs w-44"
+                          />
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={() => onSaveExpiry(coupon.id)} disabled={updatePending}>
+                            <Check className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onCancelEditExpiry}>
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground group"
+                          onClick={() => onStartEditExpiry(coupon.id, coupon.expiresAt)}
+                          title="Click to edit expiry date"
+                        >
+                          <span>{coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString("en-JP") : "Never"}</span>
+                          <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                        </button>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => onDelete(coupon.id, coupon.code)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                  {expandedCoupon === coupon.id && (
+                    <TableRow key={`${coupon.id}-redemptions`} className="hover:bg-transparent">
+                      <TableCell colSpan={8} className="p-0">
+                        <RedemptionHistory couponId={coupon.id} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
               ))
             )}
           </TableBody>
