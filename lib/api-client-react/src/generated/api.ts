@@ -85,6 +85,7 @@ import type {
   SubscriptionInfo,
   Tenant,
   TenantUpdate,
+  UpdateCouponBody,
   UpdateDashboardStoreCategoryBody,
   UpdateProductBody,
   UpdateShopBody,
@@ -2952,6 +2953,77 @@ export const useCreateDashboardCoupon = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateDashboardCouponMutationOptions(options));
+    }
+
+export const getUpdateDashboardCouponUrl = (id: string,) => {
+
+
+
+
+  return `/api/dashboard/coupons/${id}`
+}
+
+/**
+ * @summary Update a coupon (toggle active, set expiry)
+ */
+export const updateDashboardCoupon = async (id: string,
+    updateCouponBody: UpdateCouponBody, options?: RequestInit): Promise<Coupon> => {
+
+  return customFetch<Coupon>(getUpdateDashboardCouponUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateCouponBody)
+  }
+);}
+
+
+
+
+export const getUpdateDashboardCouponMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDashboardCoupon>>, TError,{id: string;data: BodyType<UpdateCouponBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDashboardCoupon>>, TError,{id: string;data: BodyType<UpdateCouponBody>}, TContext> => {
+
+const mutationKey = ['updateDashboardCoupon'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDashboardCoupon>>, {id: string;data: BodyType<UpdateCouponBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateDashboardCoupon(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateDashboardCouponMutationResult = NonNullable<Awaited<ReturnType<typeof updateDashboardCoupon>>>
+    export type UpdateDashboardCouponMutationBody = BodyType<UpdateCouponBody>
+    export type UpdateDashboardCouponMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a coupon (toggle active, set expiry)
+ */
+export const useUpdateDashboardCoupon = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDashboardCoupon>>, TError,{id: string;data: BodyType<UpdateCouponBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateDashboardCoupon>>,
+        TError,
+        {id: string;data: BodyType<UpdateCouponBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateDashboardCouponMutationOptions(options));
     }
 
 export const getDeleteDashboardCouponUrl = (id: string,) => {

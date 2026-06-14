@@ -368,6 +368,11 @@ export interface Coupon {
   createdAt: string;
 }
 
+export interface UpdateCouponBody {
+  isActive?: boolean;
+  expiresAt?: string | null;
+}
+
 export interface CreateCouponBody {
   code: string;
   description?: string;

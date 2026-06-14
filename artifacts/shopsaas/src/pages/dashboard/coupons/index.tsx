@@ -3,6 +3,7 @@ import {
   useListDashboardCoupons,
   useCreateDashboardCoupon,
   useDeleteDashboardCoupon,
+  useUpdateDashboardCoupon,
   getListDashboardCouponsQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,9 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Tag } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Trash2, Plus, Tag, Pencil, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -34,13 +35,23 @@ const couponSchema = z.object({
 
 type CouponFormValues = z.infer<typeof couponSchema>;
 
+function toDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function DashboardCouponsPage() {
   const { data, isLoading } = useListDashboardCoupons();
   const createCoupon = useCreateDashboardCoupon();
   const deleteCoupon = useDeleteDashboardCoupon();
+  const updateCoupon = useUpdateDashboardCoupon();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
+  const [expiryDraft, setExpiryDraft] = useState("");
 
   const form = useForm<CouponFormValues>({
     resolver: zodResolver(couponSchema),
@@ -81,7 +92,7 @@ export default function DashboardCouponsPage() {
   };
 
   const handleDelete = async (id: string, code: string) => {
-    if (confirm(`Delete coupon "${code}"?`)) {
+    if (confirm(`Delete coupon "${code}"? This cannot be undone.`)) {
       try {
         await deleteCoupon.mutateAsync({ id });
         queryClient.invalidateQueries({ queryKey: getListDashboardCouponsQueryKey() });
@@ -91,6 +102,36 @@ export default function DashboardCouponsPage() {
       }
     }
   };
+
+  const handleToggleActive = async (id: string, currentlyActive: boolean) => {
+    try {
+      await updateCoupon.mutateAsync({ id, data: { isActive: !currentlyActive } });
+      queryClient.invalidateQueries({ queryKey: getListDashboardCouponsQueryKey() });
+      toast({ title: currentlyActive ? "Coupon paused" : "Coupon activated" });
+    } catch {
+      toast({ title: "Failed to update coupon", variant: "destructive" });
+    }
+  };
+
+  const startEditExpiry = (id: string, expiresAt: string | null | undefined) => {
+    setEditingExpiry(id);
+    setExpiryDraft(toDatetimeLocal(expiresAt));
+  };
+
+  const saveExpiry = async (id: string) => {
+    try {
+      await updateCoupon.mutateAsync({ id, data: { expiresAt: expiryDraft || null } });
+      queryClient.invalidateQueries({ queryKey: getListDashboardCouponsQueryKey() });
+      toast({ title: "Expiry date updated" });
+    } catch {
+      toast({ title: "Failed to update expiry", variant: "destructive" });
+    } finally {
+      setEditingExpiry(null);
+    }
+  };
+
+  const activeCoupons = data?.coupons?.filter((c) => c.isActive) ?? [];
+  const inactiveCoupons = data?.coupons?.filter((c) => !c.isActive) ?? [];
 
   return (
     <DashboardLayout>
@@ -224,94 +265,206 @@ export default function DashboardCouponsPage() {
           </Dialog>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
-              Active Coupons
-            </CardTitle>
-            <CardDescription>Customers enter these codes at checkout to receive a discount</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Discount</TableHead>
-                  <TableHead>Usage</TableHead>
-                  <TableHead>Min Order</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Loading coupons...
-                    </TableCell>
-                  </TableRow>
-                ) : !data?.coupons?.length ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                      <div className="flex flex-col items-center gap-2">
-                        <Tag className="h-8 w-8 opacity-40" />
-                        <p>No coupons yet. Create one to attract customers.</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  data.coupons.map((coupon) => (
-                    <TableRow key={coupon.id}>
-                      <TableCell>
-                        <span className="font-mono font-semibold tracking-wider">{coupon.code}</span>
-                        {coupon.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{coupon.description}</p>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {coupon.discountType === "percentage"
-                            ? `${coupon.discountValue}% off`
-                            : `¥${coupon.discountValue.toLocaleString()} off`}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {coupon.usedCount}
-                          {coupon.maxUses ? ` / ${coupon.maxUses}` : ""}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {coupon.minOrderAmount ? `¥${coupon.minOrderAmount.toLocaleString()}` : "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {coupon.expiresAt
-                            ? new Date(coupon.expiresAt).toLocaleDateString("en-JP")
-                            : "Never"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(coupon.id, coupon.code)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <CouponTable
+          title="Active Coupons"
+          description="Customers can use these codes at checkout"
+          coupons={activeCoupons}
+          isLoading={isLoading}
+          emptyMessage="No active coupons. Create one or re-enable a paused coupon."
+          editingExpiry={editingExpiry}
+          expiryDraft={expiryDraft}
+          onToggleActive={handleToggleActive}
+          onStartEditExpiry={startEditExpiry}
+          onExpiryDraftChange={setExpiryDraft}
+          onSaveExpiry={saveExpiry}
+          onCancelEditExpiry={() => setEditingExpiry(null)}
+          onDelete={handleDelete}
+          updatePending={updateCoupon.isPending}
+        />
+
+        {inactiveCoupons.length > 0 && (
+          <CouponTable
+            title="Paused Coupons"
+            description="These coupons are disabled and cannot be used at checkout"
+            coupons={inactiveCoupons}
+            isLoading={false}
+            emptyMessage=""
+            editingExpiry={editingExpiry}
+            expiryDraft={expiryDraft}
+            onToggleActive={handleToggleActive}
+            onStartEditExpiry={startEditExpiry}
+            onExpiryDraftChange={setExpiryDraft}
+            onSaveExpiry={saveExpiry}
+            onCancelEditExpiry={() => setEditingExpiry(null)}
+            onDelete={handleDelete}
+            updatePending={updateCoupon.isPending}
+          />
+        )}
       </div>
     </DashboardLayout>
+  );
+}
+
+type CouponRow = {
+  id: string;
+  code: string;
+  description?: string | null;
+  discountType: string;
+  discountValue: number;
+  usedCount: number;
+  maxUses?: number | null;
+  minOrderAmount?: number | null;
+  expiresAt?: string | null;
+  isActive: boolean;
+};
+
+function CouponTable({
+  title,
+  description,
+  coupons,
+  isLoading,
+  emptyMessage,
+  editingExpiry,
+  expiryDraft,
+  onToggleActive,
+  onStartEditExpiry,
+  onExpiryDraftChange,
+  onSaveExpiry,
+  onCancelEditExpiry,
+  onDelete,
+  updatePending,
+}: {
+  title: string;
+  description: string;
+  coupons: CouponRow[];
+  isLoading: boolean;
+  emptyMessage: string;
+  editingExpiry: string | null;
+  expiryDraft: string;
+  onToggleActive: (id: string, active: boolean) => void;
+  onStartEditExpiry: (id: string, expiresAt: string | null | undefined) => void;
+  onExpiryDraftChange: (v: string) => void;
+  onSaveExpiry: (id: string) => void;
+  onCancelEditExpiry: () => void;
+  onDelete: (id: string, code: string) => void;
+  updatePending: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Tag className="h-5 w-5" />
+          {title}
+        </CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Active</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Discount</TableHead>
+              <TableHead>Usage</TableHead>
+              <TableHead>Min Order</TableHead>
+              <TableHead>Expires</TableHead>
+              <TableHead className="text-right">Delete</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  Loading coupons...
+                </TableCell>
+              </TableRow>
+            ) : coupons.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2">
+                    <Tag className="h-8 w-8 opacity-40" />
+                    <p>{emptyMessage}</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              coupons.map((coupon) => (
+                <TableRow key={coupon.id} className={!coupon.isActive ? "opacity-60" : ""}>
+                  <TableCell>
+                    <Switch
+                      checked={coupon.isActive}
+                      onCheckedChange={() => onToggleActive(coupon.id, coupon.isActive)}
+                      disabled={updatePending}
+                      aria-label={coupon.isActive ? "Pause coupon" : "Activate coupon"}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono font-semibold tracking-wider">{coupon.code}</span>
+                    {coupon.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{coupon.description}</p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {coupon.discountType === "percentage"
+                        ? `${coupon.discountValue}% off`
+                        : `¥${coupon.discountValue.toLocaleString()} off`}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">
+                      {coupon.usedCount}
+                      {coupon.maxUses ? ` / ${coupon.maxUses}` : ""}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {coupon.minOrderAmount ? `¥${coupon.minOrderAmount.toLocaleString()}` : "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {editingExpiry === coupon.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="datetime-local"
+                          value={expiryDraft}
+                          onChange={(e) => onExpiryDraftChange(e.target.value)}
+                          className="h-7 text-xs w-44"
+                        />
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={() => onSaveExpiry(coupon.id)} disabled={updatePending}>
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onCancelEditExpiry}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <button
+                        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground group"
+                        onClick={() => onStartEditExpiry(coupon.id, coupon.expiresAt)}
+                        title="Click to edit expiry date"
+                      >
+                        <span>{coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString("en-JP") : "Never"}</span>
+                        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                      </button>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => onDelete(coupon.id, coupon.code)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

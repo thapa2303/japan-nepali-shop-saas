@@ -564,7 +564,7 @@ router.get("/coupons", ...AUTH, async (req: Request, res: Response): Promise<voi
   const rows = await db
     .select()
     .from(coupons)
-    .where(and(eq(coupons.shopId, shop.id), eq(coupons.isActive, true)))
+    .where(eq(coupons.shopId, shop.id))
     .orderBy(desc(coupons.createdAt));
 
   res.json({ coupons: rows });
@@ -617,6 +617,29 @@ router.post("/coupons", ...AUTH, async (req: Request, res: Response): Promise<vo
   res.status(201).json(coupon);
 });
 
+// PUT /api/dashboard/coupons/:id
+router.put("/coupons/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+  const id = String(req.params.id);
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const [existing] = await db.select().from(coupons).where(and(eq(coupons.id, id), eq(coupons.shopId, shop.id)));
+  if (!existing) { res.status(404).json({ error: "Coupon not found" }); return; }
+
+  const { isActive, expiresAt } = req.body as { isActive?: boolean; expiresAt?: string | null };
+
+  const updates: Partial<typeof coupons.$inferInsert> = {};
+  if (isActive !== undefined) updates.isActive = Boolean(isActive);
+  if ("expiresAt" in req.body) updates.expiresAt = expiresAt ? new Date(expiresAt) : null;
+
+  const [updated] = await db.update(coupons).set(updates).where(eq(coupons.id, id)).returning();
+  await writeAuditLog({ req, action: "coupon.update", resource: "coupon", resourceId: id, metadata: { isActive: updates.isActive, expiresAt: updates.expiresAt } });
+  res.json(updated);
+});
+
 // DELETE /api/dashboard/coupons/:id
 router.delete("/coupons/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
@@ -629,7 +652,7 @@ router.delete("/coupons/:id", ...AUTH, async (req: Request, res: Response): Prom
   const [existing] = await db.select().from(coupons).where(and(eq(coupons.id, id), eq(coupons.shopId, shop.id)));
   if (!existing) { res.status(404).json({ error: "Coupon not found" }); return; }
 
-  await db.update(coupons).set({ isActive: false }).where(eq(coupons.id, id));
+  await db.delete(coupons).where(eq(coupons.id, id));
   await writeAuditLog({ req, action: "coupon.delete", resource: "coupon", resourceId: id, metadata: { code: existing.code } });
   res.json({ message: "Coupon deleted" });
 });

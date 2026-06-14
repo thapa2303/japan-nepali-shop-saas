@@ -946,6 +946,35 @@ export const CreateDashboardCouponResponse = zod.object({
 
 
 /**
+ * @summary Update a coupon (toggle active, set expiry)
+ */
+export const UpdateDashboardCouponParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateDashboardCouponBody = zod.object({
+  "isActive": zod.boolean().optional(),
+  "expiresAt": zod.string().nullish()
+})
+
+export const UpdateDashboardCouponResponse = zod.object({
+  "id": zod.string(),
+  "tenantId": zod.string(),
+  "shopId": zod.string(),
+  "code": zod.string(),
+  "description": zod.string().nullish(),
+  "discountType": zod.string(),
+  "discountValue": zod.number(),
+  "minOrderAmount": zod.number().nullish(),
+  "maxUses": zod.number().nullish(),
+  "usedCount": zod.number(),
+  "isActive": zod.boolean(),
+  "expiresAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Delete a coupon
  */
 export const DeleteDashboardCouponParams = zod.object({

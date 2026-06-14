@@ -897,6 +897,29 @@ paths:
                 $ref: "#/components/schemas/Coupon"
 
   /dashboard/coupons/{id}:
+    put:
+      operationId: updateDashboardCoupon
+      tags: [dashboard]
+      summary: Update a coupon (toggle active, set expiry)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCouponBody"
+      responses:
+        "200":
+          description: Updated coupon
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
     delete:
       operationId: deleteDashboardCoupon
       tags: [dashboard]
@@ -2037,6 +2060,15 @@ components:
         createdAt:
           type: string
       required: [id, tenantId, shopId, code, discountType, discountValue, usedCount, isActive, createdAt]
+
+    UpdateCouponBody:
+      type: object
+      properties:
+        isActive:
+          type: boolean
+        expiresAt:
+          type: string
+          nullable: true
 
     CreateCouponBody:
       type: object
