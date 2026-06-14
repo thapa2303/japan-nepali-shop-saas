@@ -3,13 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ShopSaaS API — Nepali Shops in Japan
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: shops
+    description: Shop discovery
+  - name: products
+    description: Product browsing
+  - name: search
+    description: Search
+  - name: locations
+    description: Location data
+  - name: cart
+    description: Shopping cart
+  - name: orders
+    description: Customer orders
+  - name: account
+    description: Customer account
+  - name: dashboard
+    description: Merchant dashboard
+  - name: console
+    description: Platform admin console
+  - name: admin
+    description: Tenant admin
+
 paths:
   /healthz:
     get:
@@ -24,6 +47,955 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ───────────────────────────────────────────────────────────────────
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new merchant account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── SHOPS ──────────────────────────────────────────────────────────────────
+
+  /shops:
+    get:
+      operationId: listShops
+      tags: [shops]
+      summary: List all active shops
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: location
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of shops
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shops:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Shop"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                required: [shops, pagination]
+
+  /shops/{slug}:
+    get:
+      operationId: getShop
+      tags: [shops]
+      summary: Get a shop by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Shop
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shop"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── PRODUCTS ───────────────────────────────────────────────────────────────
+
+  /shops/{shopSlug}/products:
+    get:
+      operationId: getProductsByShop
+      tags: [products]
+      summary: List products for a shop
+      parameters:
+        - in: path
+          name: shopSlug
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                required: [products, pagination]
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── SEARCH ─────────────────────────────────────────────────────────────────
+
+  /search:
+    get:
+      operationId: search
+      tags: [search]
+      summary: Search shops and products
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [all, shops, products]
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shops:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Shop"
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                required: [shops, products]
+
+  # ─── LOCATIONS ──────────────────────────────────────────────────────────────
+
+  /locations:
+    get:
+      operationId: listLocations
+      tags: [locations]
+      summary: List available prefectures and cities
+      responses:
+        "200":
+          description: Locations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  locations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Location"
+                required: [locations]
+
+  # ─── CART ───────────────────────────────────────────────────────────────────
+
+  /cart:
+    get:
+      operationId: getCart
+      tags: [cart]
+      summary: Get current cart
+      responses:
+        "200":
+          description: Cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CartItem"
+                required: [items]
+
+  /cart/items:
+    post:
+      operationId: addCartItem
+      tags: [cart]
+      summary: Add item to cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartItemInput"
+      responses:
+        "201":
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+
+  /cart/items/{id}:
+    delete:
+      operationId: removeCartItem
+      tags: [cart]
+      summary: Remove item from cart
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ─── ORDERS ─────────────────────────────────────────────────────────────────
+
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List customer orders
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                required: [orders]
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get an order by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── ACCOUNT ────────────────────────────────────────────────────────────────
+
+  /account:
+    get:
+      operationId: getAccount
+      tags: [account]
+      summary: Get current user account
+      responses:
+        "200":
+          description: Account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+    put:
+      operationId: updateAccount
+      tags: [account]
+      summary: Update account details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountUpdate"
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+
+  # ─── DASHBOARD (MERCHANT) ────────────────────────────────────────────────────
+
+  /dashboard/shop:
+    get:
+      operationId: getDashboardShop
+      tags: [dashboard]
+      summary: Get merchant shop
+      responses:
+        "200":
+          description: Shop
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shop"
+    put:
+      operationId: updateDashboardShop
+      tags: [dashboard]
+      summary: Update merchant shop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateShopBody"
+      responses:
+        "200":
+          description: Updated shop
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shop"
+
+  /dashboard/products:
+    get:
+      operationId: listDashboardProducts
+      tags: [dashboard]
+      summary: List merchant products
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                required: [products]
+    post:
+      operationId: createDashboardProduct
+      tags: [dashboard]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductBody"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /dashboard/products/{id}:
+    put:
+      operationId: updateDashboardProduct
+      tags: [dashboard]
+      summary: Update a product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductBody"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteDashboardProduct
+      tags: [dashboard]
+      summary: Delete a product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /dashboard/orders:
+    get:
+      operationId: listDashboardOrders
+      tags: [dashboard]
+      summary: List merchant orders
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DashboardOrder"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                required: [orders, pagination]
+
+  /dashboard/orders/{id}:
+    get:
+      operationId: getDashboardOrder
+      tags: [dashboard]
+      summary: Get a merchant order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOrder"
+
+  /dashboard/orders/{id}/status:
+    put:
+      operationId: updateDashboardOrderStatus
+      tags: [dashboard]
+      summary: Update order status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOrder"
+
+  /dashboard/analytics:
+    get:
+      operationId: getDashboardAnalytics
+      tags: [dashboard]
+      summary: Get merchant analytics
+      parameters:
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum: [week, month, year]
+      responses:
+        "200":
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardAnalytics"
+
+  /dashboard/subscription:
+    get:
+      operationId: getDashboardSubscription
+      tags: [dashboard]
+      summary: Get subscription info
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionInfo"
+
+  /dashboard/staff:
+    get:
+      operationId: listDashboardStaff
+      tags: [dashboard]
+      summary: List staff members
+      responses:
+        "200":
+          description: Staff
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  staff:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StaffMember"
+                required: [staff]
+    post:
+      operationId: createDashboardStaff
+      tags: [dashboard]
+      summary: Add a staff member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffInput"
+      responses:
+        "201":
+          description: Staff created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffMember"
+
+  /dashboard/staff/{id}:
+    delete:
+      operationId: deleteDashboardStaff
+      tags: [dashboard]
+      summary: Remove a staff member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # ─── CONSOLE (PLATFORM ADMIN) ────────────────────────────────────────────────
+
+  /console/tenants:
+    get:
+      operationId: listConsoleTenants
+      tags: [console]
+      summary: List all tenants
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TenantSummary"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                required: [tenants, pagination]
+    post:
+      operationId: createConsoleTenant
+      tags: [console]
+      summary: Create a tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTenantBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenant:
+                    $ref: "#/components/schemas/Tenant"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      name:
+                        type: string
+                  tempPassword:
+                    type: string
+
+  /console/tenants/{id}:
+    put:
+      operationId: updateConsoleTenant
+      tags: [console]
+      summary: Update a tenant status or tier
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TenantUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+  /console/tenants/{id}/enter:
+    post:
+      operationId: enterConsoleTenant
+      tags: [console]
+      summary: Impersonate a tenant admin
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  tenantId:
+                    type: string
+                  tenantName:
+                    type: string
+
+  /console/analytics:
+    get:
+      operationId: getConsoleAnalytics
+      tags: [console]
+      summary: Platform-wide analytics
+      responses:
+        "200":
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsoleAnalytics"
+
+  /console/customers:
+    get:
+      operationId: listConsoleCustomers
+      tags: [console]
+      summary: List all customers
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CustomerSummary"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                required: [customers, pagination]
+
+  /console/audit-logs:
+    get:
+      operationId: listConsoleAuditLogs
+      tags: [console]
+      summary: List audit logs
+      parameters:
+        - in: query
+          name: action
+          schema:
+            type: string
+        - in: query
+          name: tenantId
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditLog"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                required: [logs, pagination]
+
+  # ─── ADMIN (TENANT ADMIN) ────────────────────────────────────────────────────
+
+  /admin/customers:
+    get:
+      operationId: listAdminCustomers
+      tags: [admin]
+      summary: List customers for this tenant
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CustomerSummary"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+                required: [customers, pagination]
+
+  /admin/overview:
+    get:
+      operationId: getAdminOverview
+      tags: [admin]
+      summary: Tenant admin overview stats
+      responses:
+        "200":
+          description: Overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +1006,691 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+      required: [page, limit]
+
+    RegisterInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        displayName:
+          type: string
+        tenantName:
+          type: string
+        tenantSlug:
+          type: string
+      required: [email, password, displayName, tenantName, tenantSlug]
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    CartItemInput:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+      required: [productId, quantity]
+
+    AccountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+
+    OrderStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    StaffInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+      required: [name, email]
+
+    TenantUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        subscriptionTier:
+          type: string
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        tenantId:
+          type: string
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+      required: [id, email, displayName, roles]
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        token:
+          type: string
+      required: [user, token]
+
+    Shop:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        name:
+          type: string
+        nameNepali:
+          type: string
+          nullable: true
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+        area:
+          type: string
+          nullable: true
+        coverImage:
+          type: string
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+        contactPhone:
+          type: string
+          nullable: true
+        contactWhatsapp:
+          type: string
+          nullable: true
+        contactEmail:
+          type: string
+          nullable: true
+        deliveryFee:
+          type: integer
+          nullable: true
+        deliveryTime:
+          type: string
+          nullable: true
+        minOrder:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, tenantId, name, slug, category, isActive, createdAt]
+
+    UpdateShopBody:
+      type: object
+      properties:
+        name:
+          type: string
+        nameNepali:
+          type: string
+        description:
+          type: string
+        contactPhone:
+          type: string
+        contactWhatsapp:
+          type: string
+        contactEmail:
+          type: string
+        area:
+          type: string
+        minOrder:
+          type: integer
+        deliveryFee:
+          type: integer
+        deliveryTime:
+          type: string
+        coverImage:
+          type: string
+        logo:
+          type: string
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        shopId:
+          type: string
+        name:
+          type: string
+        nameNepali:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        price:
+          type: integer
+        compareAtPrice:
+          type: integer
+          nullable: true
+        category:
+          type: string
+        browseCategory:
+          type: string
+          nullable: true
+        inStock:
+          type: boolean
+        stockCount:
+          type: integer
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+        featured:
+          type: boolean
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, tenantId, shopId, name, price, category, inStock, featured, isActive, createdAt]
+
+    CreateProductBody:
+      type: object
+      properties:
+        name:
+          type: string
+        nameNepali:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+        compareAtPrice:
+          type: integer
+        category:
+          type: string
+        browseCategory:
+          type: string
+        inStock:
+          type: boolean
+        stockCount:
+          type: integer
+        unit:
+          type: string
+        featured:
+          type: boolean
+      required: [name, price, category]
+
+    UpdateProductBody:
+      type: object
+      properties:
+        name:
+          type: string
+        nameNepali:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+        compareAtPrice:
+          type: integer
+        category:
+          type: string
+        browseCategory:
+          type: string
+        inStock:
+          type: boolean
+        stockCount:
+          type: integer
+        unit:
+          type: string
+        featured:
+          type: boolean
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: integer
+        name:
+          type: string
+      required: [id, productId, quantity, price, name]
+
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          nullable: true
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: integer
+        subtotal:
+          type: integer
+      required: [name, quantity, price, subtotal]
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        orderNumber:
+          type: string
+        customerName:
+          type: string
+        status:
+          type: string
+        total:
+          type: integer
+        subtotal:
+          type: integer
+        deliveryFee:
+          type: integer
+        paymentMethod:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, orderNumber, customerName, status, total, subtotal, deliveryFee, createdAt]
+
+    OrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrderItem"
+            deliveryAddress:
+              type: string
+              nullable: true
+            notes:
+              type: string
+              nullable: true
+          required: [items]
+
+    DashboardOrder:
+      type: object
+      properties:
+        id:
+          type: string
+        orderNumber:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+          nullable: true
+        customerEmail:
+          type: string
+          nullable: true
+        deliveryAddress:
+          type: string
+          nullable: true
+        subtotal:
+          type: integer
+        deliveryFee:
+          type: integer
+        total:
+          type: integer
+        status:
+          type: string
+        paymentMethod:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, orderNumber, customerName, subtotal, deliveryFee, total, status, items, createdAt, updatedAt]
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, email, createdAt]
+
+    Location:
+      type: object
+      properties:
+        prefecture:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+
+    DashboardAnalytics:
+      type: object
+      properties:
+        period:
+          type: string
+        totalRevenue:
+          type: integer
+        orderCount:
+          type: integer
+        topProducts:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+                nullable: true
+              name:
+                type: string
+              unitsSold:
+                type: integer
+              revenue:
+                type: integer
+            required: [name, unitsSold, revenue]
+        revenueByDay:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              revenue:
+                type: integer
+            required: [date, revenue]
+        categoryBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              revenue:
+                type: integer
+            required: [category, revenue]
+      required: [period, totalRevenue, orderCount, topProducts, revenueByDay, categoryBreakdown]
+
+    SubscriptionPlan:
+      type: object
+      properties:
+        tier:
+          type: string
+        name:
+          type: string
+        monthlyPrice:
+          type: integer
+        productLimit:
+          type: integer
+        commissionRate:
+          type: integer
+      required: [tier, name, monthlyPrice, productLimit, commissionRate]
+
+    SubscriptionInfo:
+      type: object
+      properties:
+        tier:
+          type: string
+        status:
+          type: string
+        planName:
+          type: string
+        monthlyPrice:
+          type: integer
+        commissionRate:
+          type: integer
+        productLimit:
+          type: integer
+        currentProductCount:
+          type: integer
+        staffCount:
+          type: integer
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubscriptionPlan"
+      required: [tier, status, planName, monthlyPrice, commissionRate, productLimit, currentProductCount, staffCount, plans]
+
+    StaffMember:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        lastLoginAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        tempPassword:
+          type: string
+          nullable: true
+      required: [id, email, isActive, createdAt]
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+        subscriptionTier:
+          type: string
+        createdAt:
+          type: string
+      required: [id, name, slug, status, subscriptionTier, createdAt]
+
+    TenantSummary:
+      allOf:
+        - $ref: "#/components/schemas/Tenant"
+        - type: object
+          properties:
+            shopCount:
+              type: integer
+            productCount:
+              type: integer
+            userCount:
+              type: integer
+            orderCount:
+              type: integer
+            revenue:
+              type: integer
+            mrr:
+              type: integer
+          required: [shopCount, productCount, userCount, orderCount, revenue, mrr]
+
+    CreateTenantBody:
+      type: object
+      properties:
+        tenantName:
+          type: string
+        tenantSlug:
+          type: string
+        ownerName:
+          type: string
+        ownerEmail:
+          type: string
+        ownerPassword:
+          type: string
+        subscriptionTier:
+          type: string
+      required: [tenantName, tenantSlug, ownerName, ownerEmail]
+
+    ConsoleAnalytics:
+      type: object
+      properties:
+        totalMerchants:
+          type: integer
+        activeMerchants:
+          type: integer
+        suspendedMerchants:
+          type: integer
+        totalOrders:
+          type: integer
+        gmv:
+          type: integer
+        mrr:
+          type: integer
+        totalProducts:
+          type: integer
+        totalCustomers:
+          type: integer
+        tierDistribution:
+          type: array
+          items:
+            type: object
+            properties:
+              tier:
+                type: string
+              merchants:
+                type: integer
+            required: [tier, merchants]
+      required: [totalMerchants, activeMerchants, suspendedMerchants, totalOrders, gmv, mrr, totalProducts, totalCustomers, tierDistribution]
+
+    CustomerSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        lastLoginAt:
+          type: string
+          nullable: true
+        totalOrders:
+          type: integer
+        totalSpent:
+          type: integer
+      required: [id, email, createdAt]
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+          nullable: true
+        actorUserId:
+          type: string
+          nullable: true
+        action:
+          type: string
+        targetType:
+          type: string
+          nullable: true
+        targetId:
+          type: string
+          nullable: true
+        metadata:
+          nullable: true
+        ipAddress:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, action, createdAt]
+
+    AdminOverview:
+      type: object
+      properties:
+        shopCount:
+          type: integer
+        productCount:
+          type: integer
+        orderCount:
+          type: integer
+        revenue:
+          type: integer
+      required: [shopCount, productCount, orderCount, revenue]

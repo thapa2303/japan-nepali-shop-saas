@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "ShopSaaS — Nepali Shops in Japan"
+version = "1.0.0"
+id = "artifacts/shopsaas"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20411
+
+[services.development]
+run = "pnpm --filter @workspace/shopsaas run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/shopsaas", "run", "build" ]
+publicDir = "artifacts/shopsaas/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20411"
+BASE_PATH = "/"
