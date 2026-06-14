@@ -324,29 +324,27 @@ export default function CheckoutPage() {
                   {shopCarts.flatMap((cart) =>
                     cart.items.map((item) => (
                       <div
-                        key={`${item.product.id}-${item.variant?.id || "default"}`}
+                        key={`${item.productId}-${item.id}`}
                         className="flex gap-3"
                       >
                         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
                           <Image
-                            src={item.product.images?.[0] ?? "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=400&fit=crop"}
-                            alt={item.product.name}
+                            src={item.images?.[0] ?? "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400&h=400&fit=crop"}
+                            alt={item.name}
                             fill
                             className="object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium line-clamp-1">
-                            {item.product.name}
+                            {item.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Qty: {item.quantity}
                           </p>
                         </div>
                         <p className="text-sm font-medium">
-                          {formatPrice(
-                            (item.variant?.price || item.product.price) * item.quantity
-                          )}
+                          {formatPrice(item.price * item.quantity)}
                         </p>
                       </div>
                     ))

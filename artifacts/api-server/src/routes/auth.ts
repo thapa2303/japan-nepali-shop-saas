@@ -68,22 +68,31 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  const [existingTenant] = await db
-    .select({ id: tenants.id })
-    .from(tenants)
-    .where(eq(tenants.slug, tenantSlug));
+  const isMerchant = Boolean(tenantName && tenantSlug);
 
-  if (existingTenant) {
-    res.status(409).json({ error: "Tenant slug already taken" });
-    return;
+  if (isMerchant) {
+    const [existingTenant] = await db
+      .select({ id: tenants.id })
+      .from(tenants)
+      .where(eq(tenants.slug, tenantSlug!));
+
+    if (existingTenant) {
+      res.status(409).json({ error: "Tenant slug already taken" });
+      return;
+    }
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const [tenant] = await db
-    .insert(tenants)
-    .values({ name: tenantName, slug: tenantSlug })
-    .returning();
+  let tenant: { id: string } | undefined;
+
+  if (isMerchant) {
+    const [newTenant] = await db
+      .insert(tenants)
+      .values({ name: tenantName!, slug: tenantSlug! })
+      .returning();
+    tenant = newTenant;
+  }
 
   const [user] = await db
     .insert(users)
@@ -91,32 +100,37 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       email: email.toLowerCase(),
       passwordHash,
       name: displayName,
-      tenantId: tenant.id,
+      tenantId: tenant?.id ?? null,
     })
     .returning();
 
-  const [merchantRole] = await db
-    .select({ id: roles.id })
-    .from(roles)
-    .where(eq(roles.name, "MERCHANT"));
+  if (isMerchant) {
+    const [merchantRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, "MERCHANT"));
 
-  if (merchantRole) {
-    await db.insert(userRoles).values({
-      userId: user.id,
-      roleId: merchantRole.id,
-    });
-  }
+    if (merchantRole) {
+      await db.insert(userRoles).values({ userId: user.id, roleId: merchantRole.id });
+    }
 
-  const [tenantAdminRole] = await db
-    .select({ id: roles.id })
-    .from(roles)
-    .where(eq(roles.name, "TENANT_ADMIN"));
+    const [tenantAdminRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, "TENANT_ADMIN"));
 
-  if (tenantAdminRole) {
-    await db.insert(userRoles).values({
-      userId: user.id,
-      roleId: tenantAdminRole.id,
-    });
+    if (tenantAdminRole) {
+      await db.insert(userRoles).values({ userId: user.id, roleId: tenantAdminRole.id });
+    }
+  } else {
+    const [customerRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, "CUSTOMER"));
+
+    if (customerRole) {
+      await db.insert(userRoles).values({ userId: user.id, roleId: customerRole.id });
+    }
   }
 
   const userRoleNames = await getUserRoles(user.id);
@@ -132,13 +146,13 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   await writeAuditLog({
     req,
     userId: user.id,
-    tenantId: tenant.id,
+    tenantId: tenant?.id,
     action: "register",
     resource: "user",
     resourceId: user.id,
   });
 
-  req.log.info({ userId: user.id, tenantId: tenant.id }, "User registered");
+  req.log.info({ userId: user.id, tenantId: tenant?.id }, "User registered");
 
   const responseUser = AuthUserResponse.parse({
     id: user.id,

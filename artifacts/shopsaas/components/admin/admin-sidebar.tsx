@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -30,7 +31,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
-import { platformStats } from "@/lib/mock-data/platform"
+import { fetchConsoleAnalytics, type ConsoleAnalytics } from "@/lib/api-client"
 
 const navItems = [
   { title: "Analytics", href: "/admin", icon: LayoutDashboard },
@@ -46,6 +47,13 @@ const navItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const [stats, setStats] = useState<ConsoleAnalytics | null>(null)
+
+  useEffect(() => {
+    fetchConsoleAnalytics()
+      .then(setStats)
+      .catch(() => {})
+  }, [])
 
   return (
     <Sidebar collapsible="icon">
@@ -77,11 +85,6 @@ export function AdminSidebar() {
                       <Link href={item.href}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
-                        {item.title === "Merchants" && platformStats.pendingMerchants > 0 ? (
-                          <Badge className="ml-auto h-5 min-w-5 justify-center px-1 text-[10px] group-data-[collapsible=icon]:hidden">
-                            {platformStats.pendingMerchants}
-                          </Badge>
-                        ) : null}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -93,16 +96,18 @@ export function AdminSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="rounded-lg bg-sidebar-accent p-3 group-data-[collapsible=icon]:hidden">
-          <div className="flex items-center gap-2">
-            <Store className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold">{platformStats.activeMerchants} active</span>
-            <Badge variant="secondary" className="ml-auto text-[10px]">
-              of {platformStats.totalMerchants}
-            </Badge>
+        {stats && (
+          <div className="rounded-lg bg-sidebar-accent p-3 group-data-[collapsible=icon]:hidden">
+            <div className="flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">{stats.activeMerchants} active</span>
+              <Badge variant="secondary" className="ml-auto text-[10px]">
+                of {stats.totalMerchants}
+              </Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Merchants on the platform</p>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Merchants on the platform</p>
-        </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Back to storefront">

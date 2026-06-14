@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Search, Plus, Building2 } from "lucide-react"
+import { Search, Plus, Building2, Loader2 } from "lucide-react"
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,23 +10,40 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { tenants, tenantStatusConfig } from "@/lib/mock-data/console"
+import { fetchConsoleTenants, type ConsoleTenant } from "@/lib/api-client"
 import { tierConfig, formatYen, formatDate } from "@/lib/dashboard-utils"
 
-const statusFilters = ["all", "active", "trial", "past-due", "suspended"] as const
+const statusConfig: Record<string, { label: string; className: string }> = {
+  active:    { label: "Active",    className: "border-emerald-300 text-emerald-700 bg-emerald-50" },
+  pending:   { label: "Pending",   className: "border-amber-300 text-amber-700 bg-amber-50" },
+  suspended: { label: "Suspended", className: "border-red-300 text-red-700 bg-red-50" },
+}
+
+function getStatusConfig(status: string) {
+  return statusConfig[status] ?? { label: status, className: "" }
+}
+
+const statusFilters = ["all", "active", "pending", "suspended"] as const
 
 export function TenantList() {
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<(typeof statusFilters)[number]>("all")
+  const [tenants, setTenants] = useState<ConsoleTenant[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = tenants.filter((t) => {
-    const matchesQuery =
-      t.name.toLowerCase().includes(query.toLowerCase()) ||
-      t.region.toLowerCase().includes(query.toLowerCase()) ||
-      t.ownerName.toLowerCase().includes(query.toLowerCase())
-    const matchesStatus = status === "all" || t.status === status
-    return matchesQuery && matchesStatus
-  })
+  useEffect(() => {
+    const params: Record<string, string> = { limit: "50" }
+    if (status !== "all") params.status = status
+    fetchConsoleTenants(params)
+      .then((r) => setTenants(r.tenants ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [status])
+
+  const filtered = tenants.filter((t) =>
+    t.name.toLowerCase().includes(query.toLowerCase()) ||
+    t.slug.toLowerCase().includes(query.toLowerCase())
+  )
 
   return (
     <div className="space-y-6">
@@ -45,7 +62,7 @@ export function TenantList() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tenants, region, owner"
+            placeholder="Search by name or slug"
             className="pl-10"
           />
         </div>
@@ -53,17 +70,21 @@ export function TenantList() {
           <TabsList>
             {statusFilters.map((s) => (
               <TabsTrigger key={s} value={s} className="capitalize">
-                {s === "all" ? "All" : tenantStatusConfig[s]?.label ?? s}
+                {s === "all" ? "All" : (statusConfig[s]?.label ?? s)}
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((t) => (
-          <Link key={t.id} href={`/console/tenants/${t.id}`}>
-            <Card className="h-full transition-colors hover:border-primary/40">
+      {loading ? (
+        <div className="flex h-32 items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((t) => (
+            <Card key={t.id} className="h-full transition-colors hover:border-primary/40">
               <CardContent className="flex flex-col gap-3 p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -72,42 +93,42 @@ export function TenantList() {
                     </div>
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{t.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{t.region}</p>
+                      <p className="truncate text-xs text-muted-foreground">{t.slug}</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className={tenantStatusConfig[t.status].className}>
-                    {tenantStatusConfig[t.status].label}
+                  <Badge variant="outline" className={getStatusConfig(t.status).className}>
+                    {getStatusConfig(t.status).label}
                   </Badge>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={tierConfig[t.plan].className}>
-                    {tierConfig[t.plan].label}
+                  <Badge variant="outline" className={tierConfig[t.subscriptionTier]?.className ?? ""}>
+                    {tierConfig[t.subscriptionTier]?.label ?? t.subscriptionTier}
                   </Badge>
                   <span className="text-xs text-muted-foreground">Since {formatDate(t.createdAt)}</span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 border-t pt-3 text-center">
                   <div>
-                    <p className="text-sm font-semibold">{t.merchants}</p>
-                    <p className="text-[11px] text-muted-foreground">Merchants</p>
+                    <p className="text-sm font-semibold">{t.productCount}</p>
+                    <p className="text-[11px] text-muted-foreground">Products</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{t.customers.toLocaleString()}</p>
-                    <p className="text-[11px] text-muted-foreground">Customers</p>
+                    <p className="text-sm font-semibold">{t.orderCount}</p>
+                    <p className="text-[11px] text-muted-foreground">Orders</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{formatYen(t.mrr)}</p>
-                    <p className="text-[11px] text-muted-foreground">MRR</p>
+                    <p className="text-sm font-semibold">{formatYen(t.revenue)}</p>
+                    <p className="text-[11px] text-muted-foreground">Revenue</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filtered.length === 0 ? (
+      {!loading && filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
           No tenants match your filters.
         </div>

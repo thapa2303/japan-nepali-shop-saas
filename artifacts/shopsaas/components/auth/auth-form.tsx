@@ -87,9 +87,9 @@ export function AuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "r
       const result = await register({
         email,
         password,
-        name,
+        displayName: name,
         tenantName: accountType === "merchant" ? shopName : undefined,
-        tenantSlug,
+        tenantSlug: accountType === "merchant" ? tenantSlug : undefined,
       })
 
       toast({

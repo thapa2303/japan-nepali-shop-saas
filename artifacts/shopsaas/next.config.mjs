@@ -6,6 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  allowedDevOrigins: ["*.pike.replit.dev", "*.replit.dev", "*.repl.co"],
   async rewrites() {
     return [
       {

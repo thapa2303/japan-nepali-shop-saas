@@ -100,7 +100,7 @@ export async function FeaturedShops() {
 
                   <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3" />
-                    <span className="line-clamp-1">{(shop as Record<string, unknown> & { location?: { area?: string; city?: string; prefecture?: string } }).location?.area || (shop as Record<string, unknown> & { location?: { area?: string; city?: string; prefecture?: string } }).location?.city || "Japan"}</span>
+                    <span className="line-clamp-1">{(shop as unknown as { location?: { area?: string; city?: string; prefecture?: string } }).location?.area || (shop as unknown as { location?: { area?: string; city?: string; prefecture?: string } }).location?.city || "Japan"}</span>
                   </div>
                 </CardContent>
               </Card>

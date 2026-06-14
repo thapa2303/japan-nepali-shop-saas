@@ -39,8 +39,8 @@ export default async function ShopPage({ params }: ShopPageProps) {
 
   if (!shop) notFound()
 
-  const productCategories = Array.from(
-    new Set((products ?? []).map((p) => p.category))
+  const productCategories: string[] = Array.from(
+    new Set<string>((products ?? []).map((p) => String(p.category ?? "")).filter(Boolean))
   ).sort()
 
   return (

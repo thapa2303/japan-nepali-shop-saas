@@ -94,6 +94,39 @@ router.get("/tenants", ...AUTH, async (req: Request, res: Response): Promise<voi
   res.json({ tenants: result, pagination: { page: pageNum, limit: limitNum } });
 });
 
+// GET /api/console/tenants/:id
+router.get("/tenants/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const id = String(req.params.id);
+
+  const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
+  if (!tenant) { res.status(404).json({ error: "Tenant not found" }); return; }
+
+  const [shopCount, orderData, productCount, userCount] = await Promise.all([
+    db.select({ cnt: count() }).from(shops).where(eq(shops.tenantId, id)).then(r => Number(r[0]?.cnt ?? 0)),
+    db.select({ total: count(), revenue: sum(orders.total) }).from(orders).where(eq(orders.tenantId, id)).then(r => ({ orders: Number(r[0]?.total ?? 0), revenue: Number(r[0]?.revenue ?? 0) })),
+    db.select({ cnt: count() }).from(products).where(and(eq(products.tenantId, id), eq(products.isActive, true))).then(r => Number(r[0]?.cnt ?? 0)),
+    db.select({ cnt: count() }).from(users).where(and(eq(users.tenantId, id), eq(users.isActive, true))).then(r => Number(r[0]?.cnt ?? 0)),
+  ]);
+
+  const allPlans = await getAllPlans();
+  const planPriceMap: Record<string, number> = Object.fromEntries(allPlans.map((p) => [p.tier, p.monthlyPrice]));
+
+  res.json({
+    id: tenant.id,
+    slug: tenant.slug,
+    name: tenant.name,
+    status: tenant.status,
+    subscriptionTier: tenant.subscriptionTier,
+    createdAt: tenant.createdAt,
+    shopCount,
+    productCount,
+    userCount,
+    orderCount: orderData.orders,
+    revenue: orderData.revenue,
+    mrr: planPriceMap[tenant.subscriptionTier] ?? 0,
+  });
+});
+
 // POST /api/console/tenants
 router.post("/tenants", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const { tenantName, tenantSlug, ownerName, ownerEmail, ownerPassword, subscriptionTier = "starter" } = req.body as {

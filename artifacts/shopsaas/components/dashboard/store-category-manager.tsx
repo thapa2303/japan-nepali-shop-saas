@@ -1,10 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, GripVertical, Eye, EyeOff, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Plus, GripVertical, Eye, EyeOff, Trash2, Loader2 } from "lucide-react"
 
-import type { StoreCategory } from "@/lib/types"
-import { storeCategories } from "@/lib/mock-data/merchant-management"
+import {
+  fetchDashboardStoreCategories,
+  createDashboardStoreCategory,
+  updateDashboardStoreCategory,
+  deleteDashboardStoreCategory,
+  type DashboardStoreCategory,
+} from "@/lib/api-client"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,26 +18,46 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 
 export function StoreCategoryManager() {
-  const [categories, setCategories] = useState<StoreCategory[]>(storeCategories)
+  const [categories, setCategories] = useState<DashboardStoreCategory[]>([])
+  const [loading, setLoading] = useState(true)
   const [name, setName] = useState("")
 
-  const add = () => {
+  useEffect(() => {
+    fetchDashboardStoreCategories()
+      .then((r) => setCategories(r.categories))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const add = async () => {
     if (!name.trim()) return
-    setCategories((prev) => [
-      ...prev,
-      { id: `sc-${Date.now()}`, name: name.trim(), productCount: 0, visible: true },
-    ])
-    setName("")
-    toast({ title: "Category added" })
+    try {
+      const cat = await createDashboardStoreCategory({ name: name.trim() })
+      setCategories((prev) => [...prev, cat])
+      setName("")
+      toast({ title: "Category added" })
+    } catch (e: unknown) {
+      toast({ title: "Error", description: (e as Error).message, variant: "destructive" })
+    }
   }
 
-  const toggle = (id: string) => {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, visible: !c.visible } : c)))
+  const toggle = async (c: DashboardStoreCategory) => {
+    try {
+      const updated = await updateDashboardStoreCategory(c.id, { isVisible: !c.isVisible })
+      setCategories((prev) => prev.map((x) => (x.id === c.id ? updated : x)))
+    } catch {
+      toast({ title: "Error updating category", variant: "destructive" })
+    }
   }
 
-  const remove = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id))
-    toast({ title: "Category removed" })
+  const remove = async (c: DashboardStoreCategory) => {
+    try {
+      await deleteDashboardStoreCategory(c.id)
+      setCategories((prev) => prev.filter((x) => x.id !== c.id))
+      toast({ title: "Category removed" })
+    } catch {
+      toast({ title: "Error removing category", variant: "destructive" })
+    }
   }
 
   return (
@@ -58,39 +83,39 @@ export function StoreCategoryManager() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="divide-y p-0">
-          {categories.map((c) => (
-            <div key={c.id} className="flex items-center gap-3 p-4">
-              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{c.name}</span>
-                  {!c.visible ? (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      Hidden
-                    </Badge>
-                  ) : null}
-                </div>
-                <p className="text-sm text-muted-foreground">{c.productCount} products</p>
+      {loading ? (
+        <div className="flex h-32 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      ) : (
+        <Card>
+          <CardContent className="divide-y p-0">
+            {categories.length === 0 && (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                No categories yet. Add one above.
               </div>
-              <Button variant="ghost" size="icon" onClick={() => toggle(c.id)}>
-                {c.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                <span className="sr-only">Toggle visibility</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => remove(c.id)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Delete</span>
-              </Button>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            )}
+            {categories.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 p-4">
+                <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{c.name}</span>
+                    {!c.isVisible && (
+                      <Badge variant="outline" className="text-muted-foreground">Hidden</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{c.productCount} products</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => toggle(c)}>
+                  {c.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => remove(c)} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </>
   )
 }

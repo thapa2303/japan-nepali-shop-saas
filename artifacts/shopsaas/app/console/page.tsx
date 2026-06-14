@@ -1,28 +1,58 @@
-import type { Metadata } from "next"
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Building2, DollarSign, Store, Users, ArrowUpRight, AlertTriangle } from "lucide-react"
+import { Building2, DollarSign, Store, Users, ArrowUpRight, AlertTriangle, Loader2 } from "lucide-react"
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { consoleStats, tenants, tenantStatusConfig } from "@/lib/mock-data/console"
 import { tierConfig, formatYen } from "@/lib/dashboard-utils"
 import { ConsoleMrrChart } from "@/components/console/console-mrr-chart"
+import { fetchConsoleAnalytics, fetchConsoleTenants, type ConsoleAnalytics, type ConsoleTenant } from "@/lib/api-client"
 
-export const metadata: Metadata = {
-  title: "Platform Overview | Console",
+const statusConfig: Record<string, { label: string; className: string }> = {
+  active:    { label: "Active",    className: "border-emerald-300 text-emerald-700 bg-emerald-50" },
+  pending:   { label: "Pending",   className: "border-amber-300 text-amber-700 bg-amber-50" },
+  suspended: { label: "Suspended", className: "border-red-300 text-red-700 bg-red-50" },
+}
+
+function getStatusConfig(status: string) {
+  return statusConfig[status] ?? { label: status, className: "" }
 }
 
 export default function ConsoleOverviewPage() {
-  const stats = [
-    { label: "Total MRR", value: formatYen(consoleStats.totalMrr), icon: DollarSign, hint: "+12.4% vs last month" },
-    { label: "Active tenants", value: `${consoleStats.activeTenants} / ${consoleStats.totalTenants}`, icon: Building2, hint: `${consoleStats.trialTenants} on trial` },
-    { label: "Total merchants", value: consoleStats.totalMerchants.toLocaleString(), icon: Store, hint: "Across all tenants" },
-    { label: "Total customers", value: consoleStats.totalCustomers.toLocaleString(), icon: Users, hint: "Platform-wide" },
-  ]
+  const [analytics, setAnalytics] = useState<ConsoleAnalytics | null>(null)
+  const [tenants, setTenants] = useState<ConsoleTenant[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const needsAttention = tenants.filter((t) => t.status === "past-due" || t.status === "suspended")
+  useEffect(() => {
+    Promise.all([
+      fetchConsoleAnalytics().catch(() => null),
+      fetchConsoleTenants({ limit: "10" }).catch(() => ({ tenants: [] })),
+    ]).then(([a, t]) => {
+      if (a) setAnalytics(a)
+      setTenants(t.tenants ?? [])
+    }).finally(() => setLoading(false))
+  }, [])
+
+  const stats = analytics ? [
+    { label: "MRR", value: formatYen(analytics.mrr), icon: DollarSign, hint: "Monthly recurring revenue" },
+    { label: "Active merchants", value: `${analytics.activeMerchants} / ${analytics.totalMerchants}`, icon: Building2, hint: `${analytics.suspendedMerchants} suspended` },
+    { label: "GMV", value: formatYen(analytics.gmv), icon: Store, hint: "Gross merchandise value" },
+    { label: "Customers", value: analytics.totalCustomers.toLocaleString(), icon: Users, hint: "Platform-wide" },
+  ] : []
+
+  const suspended = tenants.filter((t) => t.status === "suspended")
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -53,10 +83,29 @@ export default function ConsoleOverviewPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Recurring revenue</CardTitle>
+            <CardTitle>Tier distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <ConsoleMrrChart />
+            {analytics?.tierDistribution && analytics.tierDistribution.length > 0 ? (
+              <div className="space-y-3">
+                {analytics.tierDistribution.map((td) => (
+                  <div key={td.tier} className="flex items-center gap-3">
+                    <Badge variant="outline" className={tierConfig[td.tier]?.className ?? ""}>
+                      {tierConfig[td.tier]?.label ?? td.tier}
+                    </Badge>
+                    <div className="flex-1 rounded-full bg-muted h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full"
+                        style={{ width: analytics.totalMerchants > 0 ? `${(td.merchants / analytics.totalMerchants) * 100}%` : "0%" }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium w-6 text-right">{td.merchants}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ConsoleMrrChart />
+            )}
           </CardContent>
         </Card>
 
@@ -68,23 +117,22 @@ export default function ConsoleOverviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {needsAttention.length === 0 ? (
-              <p className="text-sm text-muted-foreground">All tenants are healthy.</p>
+            {suspended.length === 0 ? (
+              <p className="text-sm text-muted-foreground">All merchants are healthy.</p>
             ) : (
-              needsAttention.map((t) => (
-                <Link
+              suspended.slice(0, 5).map((t) => (
+                <div
                   key={t.id}
-                  href={`/console/tenants/${t.id}`}
-                  className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:border-primary/40"
+                  className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{t.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{t.region}</p>
+                    <p className="truncate text-xs text-muted-foreground">{t.slug}</p>
                   </div>
-                  <Badge variant="outline" className={tenantStatusConfig[t.status].className}>
-                    {tenantStatusConfig[t.status].label}
+                  <Badge variant="outline" className={getStatusConfig(t.status).className}>
+                    {getStatusConfig(t.status).label}
                   </Badge>
-                </Link>
+                </div>
               ))
             )}
           </CardContent>
@@ -93,7 +141,7 @@ export default function ConsoleOverviewPage() {
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle>Tenants</CardTitle>
+          <CardTitle>Recent tenants</CardTitle>
           <Button asChild variant="ghost" size="sm">
             <Link href="/console/tenants">
               View all <ArrowUpRight className="h-4 w-4" />
@@ -108,35 +156,36 @@ export default function ConsoleOverviewPage() {
                   <th className="pb-2 font-medium">Tenant</th>
                   <th className="pb-2 font-medium">Plan</th>
                   <th className="pb-2 font-medium">Status</th>
-                  <th className="hidden pb-2 font-medium sm:table-cell">Merchants</th>
-                  <th className="pb-2 text-right font-medium">MRR</th>
+                  <th className="hidden pb-2 font-medium sm:table-cell">Orders</th>
+                  <th className="pb-2 text-right font-medium">Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {tenants.map((t) => (
                   <tr key={t.id} className="border-b last:border-0">
                     <td className="py-3">
-                      <Link href={`/console/tenants/${t.id}`} className="font-medium hover:text-primary">
-                        {t.name}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">{t.region}</p>
+                      <p className="font-medium">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.slug}</p>
                     </td>
                     <td className="py-3">
-                      <Badge variant="outline" className={tierConfig[t.plan].className}>
-                        {tierConfig[t.plan].label}
+                      <Badge variant="outline" className={tierConfig[t.subscriptionTier]?.className ?? ""}>
+                        {tierConfig[t.subscriptionTier]?.label ?? t.subscriptionTier}
                       </Badge>
                     </td>
                     <td className="py-3">
-                      <Badge variant="outline" className={tenantStatusConfig[t.status].className}>
-                        {tenantStatusConfig[t.status].label}
+                      <Badge variant="outline" className={getStatusConfig(t.status).className}>
+                        {getStatusConfig(t.status).label}
                       </Badge>
                     </td>
-                    <td className="hidden py-3 sm:table-cell">{t.merchants}</td>
-                    <td className="py-3 text-right font-medium">{formatYen(t.mrr)}</td>
+                    <td className="hidden py-3 sm:table-cell">{t.orderCount}</td>
+                    <td className="py-3 text-right font-medium">{formatYen(t.revenue)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {tenants.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">No tenants found.</p>
+            )}
           </div>
         </CardContent>
       </Card>

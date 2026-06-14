@@ -394,7 +394,7 @@ export function login(email: string, password: string): Promise<AuthResponse> {
 export function register(data: {
   email: string
   password: string
-  name: string
+  displayName: string
   tenantName?: string
   tenantSlug?: string
 }): Promise<AuthResponse> {
@@ -500,6 +500,104 @@ export function fetchConsoleAuditLogs(params: Record<string, string> = {}): Prom
 }> {
   const qs = new URLSearchParams(params).toString()
   return apiFetch(`/api/console/audit-logs${qs ? `?${qs}` : ""}`)
+}
+
+export function fetchConsoleTenant(id: string): Promise<ConsoleTenant> {
+  return apiFetch(`/api/console/tenants/${id}`)
+}
+
+// --- Dashboard: Staff ---
+
+export interface DashboardStaff {
+  id: string
+  name: string
+  email: string
+  phone?: string | null
+  isActive: boolean
+  lastLoginAt?: string | null
+  createdAt: string
+}
+
+export function fetchDashboardStaff(): Promise<{ staff: DashboardStaff[] }> {
+  return apiFetch("/api/dashboard/staff")
+}
+
+export function inviteDashboardStaff(data: { name: string; email: string }): Promise<{ id: string; name: string; email: string; tempPassword: string }> {
+  return apiFetch("/api/dashboard/staff", { method: "POST", body: JSON.stringify(data) })
+}
+
+export function deleteDashboardStaff(id: string): Promise<{ message: string }> {
+  return apiFetch(`/api/dashboard/staff/${id}`, { method: "DELETE" })
+}
+
+// --- Dashboard: Coupons ---
+
+export interface DashboardCoupon {
+  id: string
+  shopId: string
+  tenantId: string
+  code: string
+  description?: string | null
+  discountType: "percentage" | "fixed"
+  discountValue: number
+  minOrderAmount?: number | null
+  maxUses?: number | null
+  usedCount: number
+  isActive: boolean
+  expiresAt?: string | null
+  createdAt: string
+}
+
+export function fetchDashboardCoupons(): Promise<{ coupons: DashboardCoupon[] }> {
+  return apiFetch("/api/dashboard/coupons")
+}
+
+export function createDashboardCoupon(data: {
+  code: string
+  description?: string
+  discountType: "percentage" | "fixed"
+  discountValue: number
+  minOrderAmount?: number
+  maxUses?: number
+  expiresAt?: string
+}): Promise<DashboardCoupon> {
+  return apiFetch("/api/dashboard/coupons", { method: "POST", body: JSON.stringify(data) })
+}
+
+export function updateDashboardCoupon(id: string, data: { isActive?: boolean; expiresAt?: string | null }): Promise<DashboardCoupon> {
+  return apiFetch(`/api/dashboard/coupons/${id}`, { method: "PUT", body: JSON.stringify(data) })
+}
+
+export function deleteDashboardCoupon(id: string): Promise<{ message: string }> {
+  return apiFetch(`/api/dashboard/coupons/${id}`, { method: "DELETE" })
+}
+
+// --- Dashboard: Store Categories ---
+
+export interface DashboardStoreCategory {
+  id: string
+  shopId: string
+  name: string
+  isVisible: boolean
+  sortOrder: number
+  productCount: number
+  createdAt: string
+}
+
+export function fetchDashboardStoreCategories(): Promise<{ categories: DashboardStoreCategory[] }> {
+  return apiFetch("/api/dashboard/store-categories")
+}
+
+export function createDashboardStoreCategory(data: { name: string }): Promise<DashboardStoreCategory> {
+  return apiFetch("/api/dashboard/store-categories", { method: "POST", body: JSON.stringify(data) })
+}
+
+export function updateDashboardStoreCategory(id: string, data: { name?: string; isVisible?: boolean; sortOrder?: number }): Promise<DashboardStoreCategory> {
+  return apiFetch(`/api/dashboard/store-categories/${id}`, { method: "PUT", body: JSON.stringify(data) })
+}
+
+export function deleteDashboardStoreCategory(id: string): Promise<{ message: string }> {
+  return apiFetch(`/api/dashboard/store-categories/${id}`, { method: "DELETE" })
 }
 
 // --- Upload ---

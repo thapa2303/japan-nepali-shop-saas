@@ -57,7 +57,10 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchCategories()
       .then(({ categories }) => {
-        dispatch({ type: "LOAD", payload: categories })
+        dispatch({
+          type: "LOAD",
+          payload: categories.map((c) => ({ ...c, shopCount: 0 })) as unknown as Category[],
+        })
       })
       .catch((err) => {
         console.error("Failed to load categories from API:", err)

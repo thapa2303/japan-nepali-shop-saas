@@ -4,12 +4,13 @@ export const RegisterBody = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   displayName: z.string().min(1).max(100),
-  tenantName: z.string().min(1).max(100),
+  tenantName: z.string().min(1).max(100).optional(),
   tenantSlug: z
     .string()
     .min(2)
     .max(50)
-    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with dashes"),
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with dashes")
+    .optional(),
 });
 export type RegisterBody = z.infer<typeof RegisterBody>;
 

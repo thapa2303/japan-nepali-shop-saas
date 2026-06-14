@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -33,8 +34,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
-import { getShopById } from "@/lib/mock-data/shops"
-import { CURRENT_MERCHANT_SHOP_ID, merchantSubscription, getPlanByTier } from "@/lib/mock-data/merchant"
+import { fetchDashboardShop, fetchDashboardSubscription } from "@/lib/api-client"
 
 const navItems = [
   { title: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -52,8 +52,27 @@ const navItems = [
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const shop = getShopById(CURRENT_MERCHANT_SHOP_ID)
-  const plan = getPlanByTier(merchantSubscription.tier)
+  const [shopName, setShopName] = useState("")
+  const [shopLogo, setShopLogo] = useState<string | undefined>(undefined)
+  const [planName, setPlanName] = useState("")
+  const [subStatus, setSubStatus] = useState("")
+  const [renewDate, setRenewDate] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    fetchDashboardShop()
+      .then((s) => {
+        setShopName(String(s.name ?? ""))
+        setShopLogo(s.logo as string | undefined)
+      })
+      .catch(() => {})
+
+    fetchDashboardSubscription()
+      .then((sub) => {
+        setPlanName(sub.planName ?? "")
+        setSubStatus(sub.status ?? "")
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <Sidebar collapsible="icon">
@@ -61,15 +80,15 @@ export function DashboardSidebar() {
         <div className="flex items-center gap-3 px-2 py-3">
           <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg">
             <Image
-              src={shop?.logo || "/placeholder.svg"}
-              alt={shop?.name || "Shop"}
+              src={shopLogo || "/placeholder.svg"}
+              alt={shopName || "Shop"}
               fill
               className="object-cover"
               sizes="40px"
             />
           </div>
           <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-semibold">{shop?.name}</span>
+            <span className="truncate text-sm font-semibold">{shopName || "My Shop"}</span>
             <span className="truncate text-xs text-muted-foreground">Merchant Dashboard</span>
           </div>
         </div>
@@ -102,18 +121,24 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="rounded-lg bg-sidebar-accent p-3 group-data-[collapsible=icon]:hidden">
-          <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold">{plan?.name} Plan</span>
-            <Badge variant="secondary" className="ml-auto text-[10px] capitalize">
-              {merchantSubscription.status}
-            </Badge>
+        {planName && (
+          <div className="rounded-lg bg-sidebar-accent p-3 group-data-[collapsible=icon]:hidden">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">{planName}</span>
+              {subStatus && (
+                <Badge variant="secondary" className="ml-auto text-[10px] capitalize">
+                  {subStatus}
+                </Badge>
+              )}
+            </div>
+            {renewDate && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Renews {new Date(renewDate).toLocaleDateString()}
+              </p>
+            )}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Renews {new Date(merchantSubscription.currentPeriodEnd).toLocaleDateString()}
-          </p>
-        </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Back to storefront">

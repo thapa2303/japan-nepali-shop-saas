@@ -1,35 +1,56 @@
-import type { Metadata } from "next"
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, Building2, Mail, User, Globe, Calendar, Store, Users, DollarSign } from "lucide-react"
+import { ChevronLeft, Building2, Globe, Calendar, Store, Users, DollarSign, Package, Loader2 } from "lucide-react"
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { getTenantById, tenantStatusConfig, featureFlags } from "@/lib/mock-data/console"
 import { tierConfig, formatYen, formatDate } from "@/lib/dashboard-utils"
 import { TenantActions } from "@/components/console/tenant-actions"
+import type { TenantStatus } from "@/lib/types"
+import { fetchConsoleTenant, type ConsoleTenant } from "@/lib/api-client"
 
-export const metadata: Metadata = {
-  title: "Tenant Detail | Console",
+const statusConfig: Record<string, { label: string; className: string }> = {
+  active:    { label: "Active",    className: "border-emerald-300 text-emerald-700 bg-emerald-50" },
+  pending:   { label: "Pending",   className: "border-amber-300 text-amber-700 bg-amber-50" },
+  suspended: { label: "Suspended", className: "border-red-300 text-red-700 bg-red-50" },
 }
 
-export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const tenant = getTenantById(id)
-  if (!tenant) notFound()
+export default function TenantDetailPage({ params }: { params: { id: string } }) {
+  const [tenant, setTenant] = useState<ConsoleTenant | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [missing, setMissing] = useState(false)
+
+  useEffect(() => {
+    fetchConsoleTenant(params.id)
+      .then(setTenant)
+      .catch(() => setMissing(true))
+      .finally(() => setLoading(false))
+  }, [params.id])
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (missing || !tenant) return notFound()
 
   const overview = [
-    { label: "Merchants", value: tenant.merchants.toLocaleString(), icon: Store },
-    { label: "Customers", value: tenant.customers.toLocaleString(), icon: Users },
-    { label: "MRR", value: formatYen(tenant.mrr), icon: DollarSign },
+    { label: "Shops", value: tenant.shopCount.toLocaleString(), icon: Store },
+    { label: "Users", value: tenant.userCount.toLocaleString(), icon: Users },
+    { label: "Orders", value: tenant.orderCount.toLocaleString(), icon: Package },
+    { label: "Revenue", value: formatYen(tenant.revenue), icon: DollarSign },
   ]
 
   const details = [
-    { label: "Owner", value: tenant.ownerName, icon: User },
-    { label: "Email", value: tenant.ownerEmail, icon: Mail },
-    { label: "Region", value: tenant.region, icon: Globe },
+    { label: "Slug", value: tenant.slug, icon: Globe },
     { label: "Created", value: formatDate(tenant.createdAt), icon: Calendar },
   ]
 
@@ -43,19 +64,19 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
       </Button>
 
       <DashboardHeader title={tenant.name} description={`${tenant.slug}.platform.app`}>
-        <TenantActions tenantName={tenant.name} status={tenant.status} />
+        <TenantActions tenantName={tenant.name} status={tenant.status as TenantStatus} />
       </DashboardHeader>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline" className={tenantStatusConfig[tenant.status].className}>
-          {tenantStatusConfig[tenant.status].label}
+        <Badge variant="outline" className={statusConfig[tenant.status]?.className ?? ""}>
+          {statusConfig[tenant.status]?.label ?? tenant.status}
         </Badge>
-        <Badge variant="outline" className={tierConfig[tenant.plan].className}>
-          {tierConfig[tenant.plan].label} plan
+        <Badge variant="outline" className={tierConfig[tenant.subscriptionTier]?.className ?? ""}>
+          {tierConfig[tenant.subscriptionTier]?.label ?? tenant.subscriptionTier} plan
         </Badge>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {overview.map((s) => (
           <Card key={s.label}>
             <CardContent className="flex items-center gap-4 p-5">
@@ -94,31 +115,26 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Enabled features</CardTitle>
+            <CardTitle>Subscription</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {featureFlags.map((f) => {
-                const enabled = tenant.features[f.key] ?? false
-                return (
-                  <div key={f.key} className="flex items-center justify-between rounded-lg border p-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{f.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{f.category}</p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={
-                        enabled
-                          ? "bg-chart-2/20 text-foreground border-chart-2/50"
-                          : "bg-muted text-muted-foreground border-border"
-                      }
-                    >
-                      {enabled ? "On" : "Off"}
-                    </Badge>
-                  </div>
-                )
-              })}
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Badge variant="outline" className={`text-sm px-3 py-1 ${tierConfig[tenant.subscriptionTier]?.className ?? ""}`}>
+                {tierConfig[tenant.subscriptionTier]?.label ?? tenant.subscriptionTier}
+              </Badge>
+              <div>
+                <p className="text-2xl font-bold">{formatYen(tenant.mrr)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 border-t pt-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Products</p>
+                <p className="font-medium">{tenant.productCount}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Total orders</p>
+                <p className="font-medium">{tenant.orderCount}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
