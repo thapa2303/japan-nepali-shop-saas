@@ -32,6 +32,7 @@ import DashboardShopPage from "@/pages/dashboard/shop";
 import DashboardSubscriptionPage from "@/pages/dashboard/subscription";
 import DashboardStaffPage from "@/pages/dashboard/staff";
 import DashboardCouponsPage from "@/pages/dashboard/coupons";
+import DashboardCouponRedemptionsPage from "@/pages/dashboard/coupons/redemptions";
 import DashboardStoreCategoriesPage from "@/pages/dashboard/store-categories";
 
 // Admin
@@ -137,6 +138,11 @@ function Router() {
       <Route path="/dashboard/coupons">
         <ProtectedRoute allowedRoles={["MERCHANT", "TENANT_ADMIN"]}>
           <DashboardCouponsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/coupons/redemptions">
+        <ProtectedRoute allowedRoles={["MERCHANT", "TENANT_ADMIN"]}>
+          <DashboardCouponRedemptionsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/dashboard/store-categories">

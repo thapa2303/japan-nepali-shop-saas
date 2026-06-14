@@ -946,6 +946,26 @@ export const CreateDashboardCouponResponse = zod.object({
 
 
 /**
+ * @summary List all redemptions for this shop, optionally filtered by coupon code
+ */
+export const ListDashboardCouponRedemptionsQueryParams = zod.object({
+  "code": zod.coerce.string().optional().describe('Filter by coupon code (case-insensitive substring match)')
+})
+
+export const ListDashboardCouponRedemptionsResponse = zod.object({
+  "redemptions": zod.array(zod.object({
+  "orderId": zod.string(),
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "orderDate": zod.string(),
+  "discountAmount": zod.number(),
+  "couponCode": zod.string(),
+  "couponId": zod.string()
+}))
+})
+
+
+/**
  * @summary Get redemption history for a coupon
  */
 export const GetDashboardCouponRedemptionsParams = zod.object({

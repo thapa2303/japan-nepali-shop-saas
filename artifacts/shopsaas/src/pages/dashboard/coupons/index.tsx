@@ -1,3 +1,5 @@
+import React from "react";
+import { Link } from "wouter";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import {
   useListDashboardCoupons,
@@ -54,6 +56,7 @@ export default function DashboardCouponsPage() {
   const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
   const [expiryDraft, setExpiryDraft] = useState("");
   const [expandedCoupon, setExpandedCoupon] = useState<string | null>(null);
+  const [codeFilter, setCodeFilter] = useState("");
 
   const form = useForm<CouponFormValues>({
     resolver: zodResolver(couponSchema),
@@ -145,8 +148,13 @@ export default function DashboardCouponsPage() {
     }
   };
 
-  const activeCoupons = data?.coupons?.filter((c) => c.isActive) ?? [];
-  const inactiveCoupons = data?.coupons?.filter((c) => !c.isActive) ?? [];
+  const filterCode = codeFilter.trim().toUpperCase();
+  const activeCoupons = (data?.coupons?.filter((c) => c.isActive) ?? []).filter((c) =>
+    !filterCode || c.code.includes(filterCode)
+  );
+  const inactiveCoupons = (data?.coupons?.filter((c) => !c.isActive) ?? []).filter((c) =>
+    !filterCode || c.code.includes(filterCode)
+  );
 
   return (
     <DashboardLayout>
@@ -278,6 +286,23 @@ export default function DashboardCouponsPage() {
               </Form>
             </DialogContent>
           </Dialog>
+        </div>
+
+        <div className="flex items-center gap-2 max-w-xs">
+          <div className="relative flex-1">
+            <Input
+              placeholder="Filter by code…"
+              value={codeFilter}
+              onChange={(e) => setCodeFilter(e.target.value)}
+              className="uppercase pl-8 text-sm"
+            />
+            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          </div>
+          {codeFilter && (
+            <Button variant="ghost" size="sm" onClick={() => setCodeFilter("")} className="text-muted-foreground">
+              Clear
+            </Button>
+          )}
         </div>
 
         <CouponTable
@@ -486,8 +511,8 @@ function CouponTable({
               </TableRow>
             ) : (
               coupons.map((coupon) => (
-                <>
-                  <TableRow key={coupon.id} className={!coupon.isActive ? "opacity-60" : ""}>
+                <React.Fragment key={coupon.id}>
+                  <TableRow className={!coupon.isActive ? "opacity-60" : ""}>
                     <TableCell className="pl-4 pr-0">
                       <button
                         onClick={() => onToggleExpand(coupon.id)}
@@ -575,6 +600,17 @@ function CouponTable({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Link href={`/dashboard/coupons/redemptions?code=${encodeURIComponent(coupon.code)}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-foreground gap-1.5 text-xs px-2"
+                            title="View redemption history"
+                          >
+                            <History className="h-3.5 w-3.5" />
+                            Redemptions
+                          </Button>
+                        </Link>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -603,7 +639,7 @@ function CouponTable({
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               ))
             )}
           </TableBody>

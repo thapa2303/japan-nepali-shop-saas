@@ -59,6 +59,8 @@ import type {
   ListConsolePlans200,
   ListConsoleTenants200,
   ListConsoleTenantsParams,
+  ListDashboardCouponRedemptions200,
+  ListDashboardCouponRedemptionsParams,
   ListDashboardCoupons200,
   ListDashboardOrders200,
   ListDashboardOrdersParams,
@@ -2955,6 +2957,90 @@ export const useCreateDashboardCoupon = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateDashboardCouponMutationOptions(options));
     }
+
+export const getListDashboardCouponRedemptionsUrl = (params?: ListDashboardCouponRedemptionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/dashboard/coupons/redemptions?${stringifiedParams}` : `/api/dashboard/coupons/redemptions`
+}
+
+/**
+ * @summary List all redemptions for this shop, optionally filtered by coupon code
+ */
+export const listDashboardCouponRedemptions = async (params?: ListDashboardCouponRedemptionsParams, options?: RequestInit): Promise<ListDashboardCouponRedemptions200> => {
+
+  return customFetch<ListDashboardCouponRedemptions200>(getListDashboardCouponRedemptionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDashboardCouponRedemptionsQueryKey = (params?: ListDashboardCouponRedemptionsParams,) => {
+    return [
+    `/api/dashboard/coupons/redemptions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListDashboardCouponRedemptionsQueryOptions = <TData = Awaited<ReturnType<typeof listDashboardCouponRedemptions>>, TError = ErrorType<unknown>>(params?: ListDashboardCouponRedemptionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDashboardCouponRedemptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDashboardCouponRedemptionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDashboardCouponRedemptions>>> = ({ signal }) => listDashboardCouponRedemptions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDashboardCouponRedemptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDashboardCouponRedemptionsQueryResult = NonNullable<Awaited<ReturnType<typeof listDashboardCouponRedemptions>>>
+export type ListDashboardCouponRedemptionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all redemptions for this shop, optionally filtered by coupon code
+ */
+
+export function useListDashboardCouponRedemptions<TData = Awaited<ReturnType<typeof listDashboardCouponRedemptions>>, TError = ErrorType<unknown>>(
+ params?: ListDashboardCouponRedemptionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDashboardCouponRedemptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDashboardCouponRedemptionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetDashboardCouponRedemptionsUrl = (id: string,) => {
 

@@ -896,6 +896,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Coupon"
 
+  /dashboard/coupons/redemptions:
+    get:
+      operationId: listDashboardCouponRedemptions
+      tags: [dashboard]
+      summary: List all redemptions for this shop, optionally filtered by coupon code
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          description: Filter by coupon code (case-insensitive substring match)
+      responses:
+        "200":
+          description: All coupon redemptions for this shop
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redemptions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CouponRedemptionWithCode"
+                required: [redemptions]
+
   /dashboard/coupons/{id}/redemptions:
     get:
       operationId: getDashboardCouponRedemptions
@@ -2065,6 +2090,25 @@ components:
         discountAmount:
           type: integer
       required: [orderId, orderNumber, customerName, orderDate, discountAmount]
+
+    CouponRedemptionWithCode:
+      type: object
+      properties:
+        orderId:
+          type: string
+        orderNumber:
+          type: string
+        customerName:
+          type: string
+        orderDate:
+          type: string
+        discountAmount:
+          type: integer
+        couponCode:
+          type: string
+        couponId:
+          type: string
+      required: [orderId, orderNumber, customerName, orderDate, discountAmount, couponCode, couponId]
 
     Coupon:
       type: object

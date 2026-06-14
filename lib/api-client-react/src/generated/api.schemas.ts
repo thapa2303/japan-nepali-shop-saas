@@ -360,6 +360,16 @@ export interface CouponRedemption {
   discountAmount: number;
 }
 
+export interface CouponRedemptionWithCode {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  orderDate: string;
+  discountAmount: number;
+  couponCode: string;
+  couponId: string;
+}
+
 export interface Coupon {
   id: string;
   tenantId: string;
@@ -556,6 +566,17 @@ export type DeleteDashboardStaff200 = {
 
 export type ListDashboardCoupons200 = {
   coupons: Coupon[];
+};
+
+export type ListDashboardCouponRedemptionsParams = {
+/**
+ * Filter by coupon code (case-insensitive substring match)
+ */
+code?: string;
+};
+
+export type ListDashboardCouponRedemptions200 = {
+  redemptions: CouponRedemptionWithCode[];
 };
 
 export type GetDashboardCouponRedemptions200 = {
