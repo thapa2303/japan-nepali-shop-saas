@@ -5,9 +5,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, History, Tag, X } from "lucide-react";
+import { ArrowLeft, Download, History, Tag, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
+
+function exportRedemptionsCSV(
+  redemptions: { orderNumber: string; customerName: string; orderDate: string; discountAmount: number; couponCode?: string }[],
+  filename: string
+) {
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const header = ["Order #", "Customer Name", "Date", "Discount Applied (¥)"].map(escape).join(",");
+  const rows = redemptions.map((r) =>
+    [
+      escape(r.orderNumber),
+      escape(r.customerName),
+      escape(new Date(r.orderDate).toLocaleDateString("en-JP", { year: "numeric", month: "short", day: "numeric" })),
+      escape(String(r.discountAmount)),
+    ].join(",")
+  );
+  const csv = [header, ...rows].join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function DashboardCouponRedemptionsPage() {
   const [location] = useLocation();
@@ -98,17 +122,37 @@ export default function DashboardCouponRedemptionsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
-              {appliedCode ? `Redemptions for ${appliedCode}` : "All Redemptions"}
-            </CardTitle>
-            {!isLoading && !isError && (
-              <CardDescription>
-                {redemptions.length === 0
-                  ? "No redemptions found"
-                  : `${redemptions.length} redemption${redemptions.length !== 1 ? "s" : ""}`}
-              </CardDescription>
-            )}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  {appliedCode ? `Redemptions for ${appliedCode}` : "All Redemptions"}
+                </CardTitle>
+                {!isLoading && !isError && (
+                  <CardDescription className="mt-1">
+                    {redemptions.length === 0
+                      ? "No redemptions found"
+                      : `${redemptions.length} redemption${redemptions.length !== 1 ? "s" : ""}`}
+                  </CardDescription>
+                )}
+              </div>
+              {!isLoading && !isError && redemptions.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5"
+                  onClick={() =>
+                    exportRedemptionsCSV(
+                      redemptions,
+                      appliedCode ? `${appliedCode}-redemptions.csv` : "redemptions.csv"
+                    )
+                  }
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>

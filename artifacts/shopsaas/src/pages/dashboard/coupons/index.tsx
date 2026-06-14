@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Tag, Pencil, Check, X, ChevronDown, ChevronRight, History, Copy } from "lucide-react";
+import { Trash2, Plus, Tag, Pencil, Check, X, ChevronDown, ChevronRight, History, Copy, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -364,7 +364,31 @@ type CouponRow = {
   isActive: boolean;
 };
 
-function RedemptionHistory({ couponId }: { couponId: string }) {
+function exportRedemptionsCSV(
+  redemptions: { orderNumber: string; customerName: string; orderDate: string; discountAmount: number }[],
+  filename: string
+) {
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const header = ["Order #", "Customer Name", "Date", "Discount Applied (¥)"].map(escape).join(",");
+  const rows = redemptions.map((r) =>
+    [
+      escape(r.orderNumber),
+      escape(r.customerName),
+      escape(new Date(r.orderDate).toLocaleDateString("en-JP", { year: "numeric", month: "short", day: "numeric" })),
+      escape(String(r.discountAmount)),
+    ].join(",")
+  );
+  const csv = [header, ...rows].join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function RedemptionHistory({ couponId, couponCode }: { couponId: string; couponCode: string }) {
   const { data, isLoading, isError } = useGetDashboardCouponRedemptions(couponId);
 
   if (isLoading) {
@@ -396,8 +420,17 @@ function RedemptionHistory({ couponId }: { couponId: string }) {
 
   return (
     <div className="border-t bg-muted/30">
-      <div className="px-6 pt-3 pb-1">
+      <div className="px-6 pt-3 pb-1 flex items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Redemption History</p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+          onClick={() => exportRedemptionsCSV(redemptions, `${couponCode}-redemptions.csv`)}
+        >
+          <Download className="h-3 w-3" />
+          Export CSV
+        </Button>
       </div>
       <Table>
         <TableHeader>
@@ -635,7 +668,7 @@ function CouponTable({
                   {expandedCoupon === coupon.id && (
                     <TableRow key={`${coupon.id}-redemptions`} className="hover:bg-transparent">
                       <TableCell colSpan={8} className="p-0">
-                        <RedemptionHistory couponId={coupon.id} />
+                        <RedemptionHistory couponId={coupon.id} couponCode={coupon.code} />
                       </TableCell>
                     </TableRow>
                   )}
