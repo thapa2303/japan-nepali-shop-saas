@@ -349,6 +349,43 @@ export interface AdminOverview {
   revenue: number;
 }
 
+export interface Coupon {
+  id: string;
+  tenantId: string;
+  shopId: string;
+  code: string;
+  description?: string | null;
+  discountType: string;
+  discountValue: number;
+  minOrderAmount?: number | null;
+  maxUses?: number | null;
+  usedCount: number;
+  isActive: boolean;
+  expiresAt?: string | null;
+  createdAt: string;
+}
+
+export interface CreateCouponBody {
+  code: string;
+  description?: string;
+  discountType: string;
+  discountValue: number;
+  minOrderAmount?: number;
+  maxUses?: number;
+  expiresAt?: string;
+}
+
+export interface StoreCategory {
+  id: string;
+  tenantId: string;
+  shopId: string;
+  name: string;
+  sortOrder: number;
+  isVisible: boolean;
+  productCount: number;
+  createdAt: string;
+}
+
 export type Logout200 = {
   message?: string;
 };
@@ -447,6 +484,31 @@ export type ListDashboardStaff200 = {
 };
 
 export type DeleteDashboardStaff200 = {
+  message?: string;
+};
+
+export type ListDashboardCoupons200 = {
+  coupons: Coupon[];
+};
+
+export type DeleteDashboardCoupon200 = {
+  message?: string;
+};
+
+export type ListDashboardStoreCategories200 = {
+  categories: StoreCategory[];
+};
+
+export type CreateDashboardStoreCategoryBody = {
+  name: string;
+};
+
+export type UpdateDashboardStoreCategoryBody = {
+  isVisible?: boolean;
+  sortOrder?: number;
+};
+
+export type DeleteDashboardStoreCategory200 = {
   message?: string;
 };
 

@@ -740,6 +740,154 @@ paths:
                   message:
                     type: string
 
+  /dashboard/coupons:
+    get:
+      operationId: listDashboardCoupons
+      tags: [dashboard]
+      summary: List shop coupons
+      responses:
+        "200":
+          description: Coupons
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coupons:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Coupon"
+                required: [coupons]
+    post:
+      operationId: createDashboardCoupon
+      tags: [dashboard]
+      summary: Create a coupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCouponBody"
+      responses:
+        "201":
+          description: Coupon created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+
+  /dashboard/coupons/{id}:
+    delete:
+      operationId: deleteDashboardCoupon
+      tags: [dashboard]
+      summary: Delete a coupon
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /dashboard/store-categories:
+    get:
+      operationId: listDashboardStoreCategories
+      tags: [dashboard]
+      summary: List store categories
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StoreCategory"
+                required: [categories]
+    post:
+      operationId: createDashboardStoreCategory
+      tags: [dashboard]
+      summary: Create a store category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreCategory"
+
+  /dashboard/store-categories/{id}:
+    put:
+      operationId: updateDashboardStoreCategory
+      tags: [dashboard]
+      summary: Update a store category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isVisible:
+                  type: boolean
+                sortOrder:
+                  type: integer
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreCategory"
+    delete:
+      operationId: deleteDashboardStoreCategory
+      tags: [dashboard]
+      summary: Delete a store category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
   # ─── CONSOLE (PLATFORM ADMIN) ────────────────────────────────────────────────
 
   /console/tenants:
@@ -1694,3 +1842,78 @@ components:
         revenue:
           type: integer
       required: [shopCount, productCount, orderCount, revenue]
+
+    Coupon:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        shopId:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+          nullable: true
+        discountType:
+          type: string
+        discountValue:
+          type: integer
+        minOrderAmount:
+          type: integer
+          nullable: true
+        maxUses:
+          type: integer
+          nullable: true
+        usedCount:
+          type: integer
+        isActive:
+          type: boolean
+        expiresAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, tenantId, shopId, code, discountType, discountValue, usedCount, isActive, createdAt]
+
+    CreateCouponBody:
+      type: object
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+        discountType:
+          type: string
+        discountValue:
+          type: integer
+        minOrderAmount:
+          type: integer
+        maxUses:
+          type: integer
+        expiresAt:
+          type: string
+      required: [code, discountType, discountValue]
+
+    StoreCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        shopId:
+          type: string
+        name:
+          type: string
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+        productCount:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, tenantId, shopId, name, sortOrder, isVisible, productCount, createdAt]

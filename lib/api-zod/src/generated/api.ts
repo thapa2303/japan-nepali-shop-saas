@@ -787,6 +787,142 @@ export const DeleteDashboardStaffResponse = zod.object({
 
 
 /**
+ * @summary List shop coupons
+ */
+export const ListDashboardCouponsResponse = zod.object({
+  "coupons": zod.array(zod.object({
+  "id": zod.string(),
+  "tenantId": zod.string(),
+  "shopId": zod.string(),
+  "code": zod.string(),
+  "description": zod.string().nullish(),
+  "discountType": zod.string(),
+  "discountValue": zod.number(),
+  "minOrderAmount": zod.number().nullish(),
+  "maxUses": zod.number().nullish(),
+  "usedCount": zod.number(),
+  "isActive": zod.boolean(),
+  "expiresAt": zod.string().nullish(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Create a coupon
+ */
+export const CreateDashboardCouponBody = zod.object({
+  "code": zod.string(),
+  "description": zod.string().optional(),
+  "discountType": zod.string(),
+  "discountValue": zod.number(),
+  "minOrderAmount": zod.number().optional(),
+  "maxUses": zod.number().optional(),
+  "expiresAt": zod.string().optional()
+})
+
+export const CreateDashboardCouponResponse = zod.object({
+  "id": zod.string(),
+  "tenantId": zod.string(),
+  "shopId": zod.string(),
+  "code": zod.string(),
+  "description": zod.string().nullish(),
+  "discountType": zod.string(),
+  "discountValue": zod.number(),
+  "minOrderAmount": zod.number().nullish(),
+  "maxUses": zod.number().nullish(),
+  "usedCount": zod.number(),
+  "isActive": zod.boolean(),
+  "expiresAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a coupon
+ */
+export const DeleteDashboardCouponParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteDashboardCouponResponse = zod.object({
+  "message": zod.string().optional()
+})
+
+
+/**
+ * @summary List store categories
+ */
+export const ListDashboardStoreCategoriesResponse = zod.object({
+  "categories": zod.array(zod.object({
+  "id": zod.string(),
+  "tenantId": zod.string(),
+  "shopId": zod.string(),
+  "name": zod.string(),
+  "sortOrder": zod.number(),
+  "isVisible": zod.boolean(),
+  "productCount": zod.number(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Create a store category
+ */
+export const CreateDashboardStoreCategoryBody = zod.object({
+  "name": zod.string()
+})
+
+export const CreateDashboardStoreCategoryResponse = zod.object({
+  "id": zod.string(),
+  "tenantId": zod.string(),
+  "shopId": zod.string(),
+  "name": zod.string(),
+  "sortOrder": zod.number(),
+  "isVisible": zod.boolean(),
+  "productCount": zod.number(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update a store category
+ */
+export const UpdateDashboardStoreCategoryParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateDashboardStoreCategoryBody = zod.object({
+  "isVisible": zod.boolean().optional(),
+  "sortOrder": zod.number().optional()
+})
+
+export const UpdateDashboardStoreCategoryResponse = zod.object({
+  "id": zod.string(),
+  "tenantId": zod.string(),
+  "shopId": zod.string(),
+  "name": zod.string(),
+  "sortOrder": zod.number(),
+  "isVisible": zod.boolean(),
+  "productCount": zod.number(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a store category
+ */
+export const DeleteDashboardStoreCategoryParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteDashboardStoreCategoryResponse = zod.object({
+  "message": zod.string().optional()
+})
+
+
+/**
  * @summary List all tenants
  */
 export const ListConsoleTenantsQueryParams = zod.object({

@@ -9,6 +9,8 @@ import {
   products,
   orders,
   orderItems,
+  coupons,
+  shopStoreCategories,
   auditLogs,
   eq,
   and,
@@ -61,7 +63,7 @@ function getPeriodStart(period: string): Date {
 }
 
 // GET /api/dashboard/shop
-router.get("/dashboard/shop", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/shop", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const shop = await getMerchantShop(tenantId);
@@ -70,7 +72,7 @@ router.get("/dashboard/shop", ...AUTH, async (req: Request, res: Response): Prom
 });
 
 // PUT /api/dashboard/shop
-router.put("/dashboard/shop", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.put("/shop", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const shop = await getMerchantShop(tenantId);
@@ -100,7 +102,7 @@ router.put("/dashboard/shop", ...AUTH, async (req: Request, res: Response): Prom
 });
 
 // GET /api/dashboard/products
-router.get("/dashboard/products", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/products", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
 
@@ -114,7 +116,7 @@ router.get("/dashboard/products", ...AUTH, async (req: Request, res: Response): 
 });
 
 // POST /api/dashboard/products
-router.post("/dashboard/products", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.post("/products", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
 
@@ -183,7 +185,7 @@ router.post("/dashboard/products", ...AUTH, async (req: Request, res: Response):
 });
 
 // PUT /api/dashboard/products/:id
-router.put("/dashboard/products/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.put("/products/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const id = String(req.params.id);
@@ -214,7 +216,7 @@ router.put("/dashboard/products/:id", ...AUTH, async (req: Request, res: Respons
 });
 
 // DELETE /api/dashboard/products/:id
-router.delete("/dashboard/products/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.delete("/products/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const id = String(req.params.id);
@@ -235,7 +237,7 @@ router.delete("/dashboard/products/:id", ...AUTH, async (req: Request, res: Resp
 });
 
 // GET /api/dashboard/orders
-router.get("/dashboard/orders", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/orders", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const { status, page = "1", limit = "20" } = req.query as Record<string, string>;
@@ -297,7 +299,7 @@ router.get("/dashboard/orders", ...AUTH, async (req: Request, res: Response): Pr
 });
 
 // GET /api/dashboard/orders/:id
-router.get("/dashboard/orders/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/orders/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const id = String(req.params.id);
@@ -332,7 +334,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   cancelled: [],
 };
 
-router.put("/dashboard/orders/:id/status", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.put("/orders/:id/status", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const id = String(req.params.id);
@@ -370,7 +372,7 @@ router.put("/dashboard/orders/:id/status", ...AUTH, async (req: Request, res: Re
 });
 
 // GET /api/dashboard/analytics
-router.get("/dashboard/analytics", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/analytics", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const { period = "month" } = req.query as Record<string, string>;
@@ -432,7 +434,7 @@ router.get("/dashboard/analytics", ...AUTH, async (req: Request, res: Response):
 });
 
 // GET /api/dashboard/subscription
-router.get("/dashboard/subscription", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/subscription", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
 
@@ -481,7 +483,7 @@ router.get("/dashboard/subscription", ...AUTH, async (req: Request, res: Respons
 });
 
 // GET /api/dashboard/staff
-router.get("/dashboard/staff", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/staff", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
 
@@ -510,7 +512,7 @@ router.get("/dashboard/staff", ...AUTH, async (req: Request, res: Response): Pro
 });
 
 // POST /api/dashboard/staff
-router.post("/dashboard/staff", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.post("/staff", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const { name, email } = req.body as { name: string; email: string };
@@ -540,7 +542,7 @@ router.post("/dashboard/staff", ...AUTH, async (req: Request, res: Response): Pr
 });
 
 // DELETE /api/dashboard/staff/:id
-router.delete("/dashboard/staff/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.delete("/staff/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const id = String(req.params.id);
@@ -551,6 +553,182 @@ router.delete("/dashboard/staff/:id", ...AUTH, async (req: Request, res: Respons
   await db.update(users).set({ isActive: false }).where(eq(users.id, id));
   await writeAuditLog({ req, action: "staff.delete", resource: "user", resourceId: id });
   res.json({ message: "Staff member removed" });
+});
+
+// GET /api/dashboard/coupons
+router.get("/coupons", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const rows = await db
+    .select()
+    .from(coupons)
+    .where(and(eq(coupons.shopId, shop.id), eq(coupons.isActive, true)))
+    .orderBy(desc(coupons.createdAt));
+
+  res.json({ coupons: rows });
+});
+
+// POST /api/dashboard/coupons
+router.post("/coupons", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const { code, description, discountType, discountValue, minOrderAmount, maxUses, expiresAt } = req.body as {
+    code: string;
+    description?: string;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+    minOrderAmount?: number;
+    maxUses?: number;
+    expiresAt?: string;
+  };
+
+  if (!code || !discountType || discountValue == null) {
+    res.status(400).json({ error: "code, discountType, and discountValue are required" });
+    return;
+  }
+  if (!["percentage", "fixed"].includes(discountType)) {
+    res.status(400).json({ error: "discountType must be percentage or fixed" });
+    return;
+  }
+  if (discountType === "percentage" && (discountValue < 1 || discountValue > 100)) {
+    res.status(400).json({ error: "Percentage discount must be between 1 and 100" });
+    return;
+  }
+
+  const [coupon] = await db.insert(coupons).values({
+    tenantId,
+    shopId: shop.id,
+    code: code.toUpperCase().trim(),
+    description: description ?? null,
+    discountType,
+    discountValue: Number(discountValue),
+    minOrderAmount: minOrderAmount != null ? Number(minOrderAmount) : null,
+    maxUses: maxUses != null ? Number(maxUses) : null,
+    expiresAt: expiresAt ? new Date(expiresAt) : null,
+  }).returning();
+
+  await writeAuditLog({ req, action: "coupon.create", resource: "coupon", resourceId: coupon.id, metadata: { code } });
+  res.status(201).json(coupon);
+});
+
+// DELETE /api/dashboard/coupons/:id
+router.delete("/coupons/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+  const id = String(req.params.id);
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const [existing] = await db.select().from(coupons).where(and(eq(coupons.id, id), eq(coupons.shopId, shop.id)));
+  if (!existing) { res.status(404).json({ error: "Coupon not found" }); return; }
+
+  await db.update(coupons).set({ isActive: false }).where(eq(coupons.id, id));
+  await writeAuditLog({ req, action: "coupon.delete", resource: "coupon", resourceId: id, metadata: { code: existing.code } });
+  res.json({ message: "Coupon deleted" });
+});
+
+// GET /api/dashboard/store-categories
+router.get("/store-categories", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const cats = await db
+    .select()
+    .from(shopStoreCategories)
+    .where(eq(shopStoreCategories.shopId, shop.id))
+    .orderBy(asc(shopStoreCategories.sortOrder), asc(shopStoreCategories.createdAt));
+
+  const productCounts = await db
+    .select({
+      storeCategory: products.storeCategory,
+      total: count(),
+    })
+    .from(products)
+    .where(and(eq(products.shopId, shop.id), eq(products.isActive, true)))
+    .groupBy(products.storeCategory);
+
+  const countMap: Record<string, number> = {};
+  for (const row of productCounts) {
+    if (row.storeCategory) countMap[row.storeCategory] = Number(row.total);
+  }
+
+  res.json({
+    categories: cats.map((c) => ({
+      ...c,
+      productCount: countMap[c.name] ?? 0,
+    })),
+  });
+});
+
+// POST /api/dashboard/store-categories
+router.post("/store-categories", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const { name } = req.body as { name: string };
+  if (!name?.trim()) { res.status(400).json({ error: "name is required" }); return; }
+
+  const [cat] = await db.insert(shopStoreCategories).values({
+    tenantId,
+    shopId: shop.id,
+    name: name.trim(),
+  }).returning();
+
+  await writeAuditLog({ req, action: "store_category.create", resource: "store_category", resourceId: cat.id, metadata: { name } });
+  res.status(201).json({ ...cat, productCount: 0 });
+});
+
+// PUT /api/dashboard/store-categories/:id
+router.put("/store-categories/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+  const id = String(req.params.id);
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const [existing] = await db.select().from(shopStoreCategories).where(and(eq(shopStoreCategories.id, id), eq(shopStoreCategories.shopId, shop.id)));
+  if (!existing) { res.status(404).json({ error: "Category not found" }); return; }
+
+  const { isVisible, sortOrder } = req.body as { isVisible?: boolean; sortOrder?: number };
+  const updates: Partial<typeof shopStoreCategories.$inferInsert> = {};
+  if (isVisible !== undefined) updates.isVisible = isVisible;
+  if (sortOrder !== undefined) updates.sortOrder = Number(sortOrder);
+
+  const [updated] = await db.update(shopStoreCategories).set(updates).where(eq(shopStoreCategories.id, id)).returning();
+  res.json({ ...updated, productCount: 0 });
+});
+
+// DELETE /api/dashboard/store-categories/:id
+router.delete("/store-categories/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+  const tenantId = req.user!.tenantId;
+  if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
+  const id = String(req.params.id);
+
+  const shop = await getMerchantShop(tenantId);
+  if (!shop) { res.status(404).json({ error: "Shop not found" }); return; }
+
+  const [existing] = await db.select().from(shopStoreCategories).where(and(eq(shopStoreCategories.id, id), eq(shopStoreCategories.shopId, shop.id)));
+  if (!existing) { res.status(404).json({ error: "Category not found" }); return; }
+
+  await db.delete(shopStoreCategories).where(eq(shopStoreCategories.id, id));
+  await writeAuditLog({ req, action: "store_category.delete", resource: "store_category", resourceId: id, metadata: { name: existing.name } });
+  res.json({ message: "Category deleted" });
 });
 
 export default router;

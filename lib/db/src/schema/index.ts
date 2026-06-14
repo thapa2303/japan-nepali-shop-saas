@@ -5,6 +5,7 @@ export * from "./products";
 export * from "./orders";
 export * from "./platform";
 export * from "./customers";
+export * from "./promotions";
 export * from "./relations";
 
 // ── Inferred TypeScript types for all tables ──────────────────────────────────
@@ -28,6 +29,9 @@ import type {
 import type {
   customerAddresses, customerPreferences, customerFavoriteShops,
 } from "./customers";
+import type {
+  coupons, shopStoreCategories,
+} from "./promotions";
 
 // Identity
 export type Tenant = typeof tenants.$inferSelect;
@@ -91,3 +95,9 @@ export type CustomerAddress = typeof customerAddresses.$inferSelect;
 export type NewCustomerAddress = typeof customerAddresses.$inferInsert;
 export type CustomerPreference = typeof customerPreferences.$inferSelect;
 export type CustomerFavoriteShop = typeof customerFavoriteShops.$inferSelect;
+
+// Promotions
+export type Coupon = typeof coupons.$inferSelect;
+export type NewCoupon = typeof coupons.$inferInsert;
+export type ShopStoreCategory = typeof shopStoreCategories.$inferSelect;
+export type NewShopStoreCategory = typeof shopStoreCategories.$inferInsert;

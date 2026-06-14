@@ -30,6 +30,8 @@ import DashboardOrderDetailPage from "@/pages/dashboard/orders/detail";
 import DashboardShopPage from "@/pages/dashboard/shop";
 import DashboardSubscriptionPage from "@/pages/dashboard/subscription";
 import DashboardStaffPage from "@/pages/dashboard/staff";
+import DashboardCouponsPage from "@/pages/dashboard/coupons";
+import DashboardStoreCategoriesPage from "@/pages/dashboard/store-categories";
 
 // Admin
 import AdminPage from "@/pages/admin";
@@ -124,6 +126,16 @@ function Router() {
       <Route path="/dashboard/staff">
         <ProtectedRoute allowedRoles={["MERCHANT", "TENANT_ADMIN"]}>
           <DashboardStaffPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/coupons">
+        <ProtectedRoute allowedRoles={["MERCHANT", "TENANT_ADMIN"]}>
+          <DashboardCouponsPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/store-categories">
+        <ProtectedRoute allowedRoles={["MERCHANT", "TENANT_ADMIN"]}>
+          <DashboardStoreCategoriesPage />
         </ProtectedRoute>
       </Route>
 

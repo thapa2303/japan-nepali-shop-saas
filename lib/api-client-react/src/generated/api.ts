@@ -27,13 +27,18 @@ import type {
   CartItem,
   CartItemInput,
   ConsoleAnalytics,
+  Coupon,
   CreateConsoleTenant201,
+  CreateCouponBody,
+  CreateDashboardStoreCategoryBody,
   CreateProductBody,
   CreateTenantBody,
   DashboardAnalytics,
   DashboardOrder,
+  DeleteDashboardCoupon200,
   DeleteDashboardProduct200,
   DeleteDashboardStaff200,
+  DeleteDashboardStoreCategory200,
   EnterConsoleTenant200,
   ErrorResponse,
   GetCart200,
@@ -49,10 +54,12 @@ import type {
   ListConsoleCustomersParams,
   ListConsoleTenants200,
   ListConsoleTenantsParams,
+  ListDashboardCoupons200,
   ListDashboardOrders200,
   ListDashboardOrdersParams,
   ListDashboardProducts200,
   ListDashboardStaff200,
+  ListDashboardStoreCategories200,
   ListLocations200,
   ListOrders200,
   ListShops200,
@@ -70,9 +77,11 @@ import type {
   Shop,
   StaffInput,
   StaffMember,
+  StoreCategory,
   SubscriptionInfo,
   Tenant,
   TenantUpdate,
+  UpdateDashboardStoreCategoryBody,
   UpdateProductBody,
   UpdateShopBody
 } from './api.schemas';
@@ -2503,6 +2512,511 @@ export const useDeleteDashboardStaff = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteDashboardStaffMutationOptions(options));
+    }
+
+export const getListDashboardCouponsUrl = () => {
+
+
+
+
+  return `/api/dashboard/coupons`
+}
+
+/**
+ * @summary List shop coupons
+ */
+export const listDashboardCoupons = async ( options?: RequestInit): Promise<ListDashboardCoupons200> => {
+
+  return customFetch<ListDashboardCoupons200>(getListDashboardCouponsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDashboardCouponsQueryKey = () => {
+    return [
+    `/api/dashboard/coupons`
+    ] as const;
+    }
+
+
+export const getListDashboardCouponsQueryOptions = <TData = Awaited<ReturnType<typeof listDashboardCoupons>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDashboardCoupons>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDashboardCouponsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDashboardCoupons>>> = ({ signal }) => listDashboardCoupons({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDashboardCoupons>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDashboardCouponsQueryResult = NonNullable<Awaited<ReturnType<typeof listDashboardCoupons>>>
+export type ListDashboardCouponsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List shop coupons
+ */
+
+export function useListDashboardCoupons<TData = Awaited<ReturnType<typeof listDashboardCoupons>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDashboardCoupons>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDashboardCouponsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateDashboardCouponUrl = () => {
+
+
+
+
+  return `/api/dashboard/coupons`
+}
+
+/**
+ * @summary Create a coupon
+ */
+export const createDashboardCoupon = async (createCouponBody: CreateCouponBody, options?: RequestInit): Promise<Coupon> => {
+
+  return customFetch<Coupon>(getCreateDashboardCouponUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createCouponBody)
+  }
+);}
+
+
+
+
+export const getCreateDashboardCouponMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDashboardCoupon>>, TError,{data: BodyType<CreateCouponBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDashboardCoupon>>, TError,{data: BodyType<CreateCouponBody>}, TContext> => {
+
+const mutationKey = ['createDashboardCoupon'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDashboardCoupon>>, {data: BodyType<CreateCouponBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDashboardCoupon(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDashboardCouponMutationResult = NonNullable<Awaited<ReturnType<typeof createDashboardCoupon>>>
+    export type CreateDashboardCouponMutationBody = BodyType<CreateCouponBody>
+    export type CreateDashboardCouponMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a coupon
+ */
+export const useCreateDashboardCoupon = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDashboardCoupon>>, TError,{data: BodyType<CreateCouponBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDashboardCoupon>>,
+        TError,
+        {data: BodyType<CreateCouponBody>},
+        TContext
+      > => {
+      return useMutation(getCreateDashboardCouponMutationOptions(options));
+    }
+
+export const getDeleteDashboardCouponUrl = (id: string,) => {
+
+
+
+
+  return `/api/dashboard/coupons/${id}`
+}
+
+/**
+ * @summary Delete a coupon
+ */
+export const deleteDashboardCoupon = async (id: string, options?: RequestInit): Promise<DeleteDashboardCoupon200> => {
+
+  return customFetch<DeleteDashboardCoupon200>(getDeleteDashboardCouponUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteDashboardCouponMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDashboardCoupon>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteDashboardCoupon>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteDashboardCoupon'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteDashboardCoupon>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteDashboardCoupon(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteDashboardCouponMutationResult = NonNullable<Awaited<ReturnType<typeof deleteDashboardCoupon>>>
+
+    export type DeleteDashboardCouponMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a coupon
+ */
+export const useDeleteDashboardCoupon = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDashboardCoupon>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteDashboardCoupon>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteDashboardCouponMutationOptions(options));
+    }
+
+export const getListDashboardStoreCategoriesUrl = () => {
+
+
+
+
+  return `/api/dashboard/store-categories`
+}
+
+/**
+ * @summary List store categories
+ */
+export const listDashboardStoreCategories = async ( options?: RequestInit): Promise<ListDashboardStoreCategories200> => {
+
+  return customFetch<ListDashboardStoreCategories200>(getListDashboardStoreCategoriesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDashboardStoreCategoriesQueryKey = () => {
+    return [
+    `/api/dashboard/store-categories`
+    ] as const;
+    }
+
+
+export const getListDashboardStoreCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listDashboardStoreCategories>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDashboardStoreCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDashboardStoreCategoriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDashboardStoreCategories>>> = ({ signal }) => listDashboardStoreCategories({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDashboardStoreCategories>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDashboardStoreCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listDashboardStoreCategories>>>
+export type ListDashboardStoreCategoriesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List store categories
+ */
+
+export function useListDashboardStoreCategories<TData = Awaited<ReturnType<typeof listDashboardStoreCategories>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDashboardStoreCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDashboardStoreCategoriesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateDashboardStoreCategoryUrl = () => {
+
+
+
+
+  return `/api/dashboard/store-categories`
+}
+
+/**
+ * @summary Create a store category
+ */
+export const createDashboardStoreCategory = async (createDashboardStoreCategoryBody: CreateDashboardStoreCategoryBody, options?: RequestInit): Promise<StoreCategory> => {
+
+  return customFetch<StoreCategory>(getCreateDashboardStoreCategoryUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createDashboardStoreCategoryBody)
+  }
+);}
+
+
+
+
+export const getCreateDashboardStoreCategoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDashboardStoreCategory>>, TError,{data: BodyType<CreateDashboardStoreCategoryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDashboardStoreCategory>>, TError,{data: BodyType<CreateDashboardStoreCategoryBody>}, TContext> => {
+
+const mutationKey = ['createDashboardStoreCategory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDashboardStoreCategory>>, {data: BodyType<CreateDashboardStoreCategoryBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDashboardStoreCategory(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDashboardStoreCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof createDashboardStoreCategory>>>
+    export type CreateDashboardStoreCategoryMutationBody = BodyType<CreateDashboardStoreCategoryBody>
+    export type CreateDashboardStoreCategoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a store category
+ */
+export const useCreateDashboardStoreCategory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDashboardStoreCategory>>, TError,{data: BodyType<CreateDashboardStoreCategoryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDashboardStoreCategory>>,
+        TError,
+        {data: BodyType<CreateDashboardStoreCategoryBody>},
+        TContext
+      > => {
+      return useMutation(getCreateDashboardStoreCategoryMutationOptions(options));
+    }
+
+export const getUpdateDashboardStoreCategoryUrl = (id: string,) => {
+
+
+
+
+  return `/api/dashboard/store-categories/${id}`
+}
+
+/**
+ * @summary Update a store category
+ */
+export const updateDashboardStoreCategory = async (id: string,
+    updateDashboardStoreCategoryBody: UpdateDashboardStoreCategoryBody, options?: RequestInit): Promise<StoreCategory> => {
+
+  return customFetch<StoreCategory>(getUpdateDashboardStoreCategoryUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateDashboardStoreCategoryBody)
+  }
+);}
+
+
+
+
+export const getUpdateDashboardStoreCategoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDashboardStoreCategory>>, TError,{id: string;data: BodyType<UpdateDashboardStoreCategoryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDashboardStoreCategory>>, TError,{id: string;data: BodyType<UpdateDashboardStoreCategoryBody>}, TContext> => {
+
+const mutationKey = ['updateDashboardStoreCategory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDashboardStoreCategory>>, {id: string;data: BodyType<UpdateDashboardStoreCategoryBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateDashboardStoreCategory(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateDashboardStoreCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof updateDashboardStoreCategory>>>
+    export type UpdateDashboardStoreCategoryMutationBody = BodyType<UpdateDashboardStoreCategoryBody>
+    export type UpdateDashboardStoreCategoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a store category
+ */
+export const useUpdateDashboardStoreCategory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDashboardStoreCategory>>, TError,{id: string;data: BodyType<UpdateDashboardStoreCategoryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateDashboardStoreCategory>>,
+        TError,
+        {id: string;data: BodyType<UpdateDashboardStoreCategoryBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateDashboardStoreCategoryMutationOptions(options));
+    }
+
+export const getDeleteDashboardStoreCategoryUrl = (id: string,) => {
+
+
+
+
+  return `/api/dashboard/store-categories/${id}`
+}
+
+/**
+ * @summary Delete a store category
+ */
+export const deleteDashboardStoreCategory = async (id: string, options?: RequestInit): Promise<DeleteDashboardStoreCategory200> => {
+
+  return customFetch<DeleteDashboardStoreCategory200>(getDeleteDashboardStoreCategoryUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteDashboardStoreCategoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDashboardStoreCategory>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteDashboardStoreCategory>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteDashboardStoreCategory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteDashboardStoreCategory>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteDashboardStoreCategory(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteDashboardStoreCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteDashboardStoreCategory>>>
+
+    export type DeleteDashboardStoreCategoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a store category
+ */
+export const useDeleteDashboardStoreCategory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDashboardStoreCategory>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteDashboardStoreCategory>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteDashboardStoreCategoryMutationOptions(options));
     }
 
 export const getListConsoleTenantsUrl = (params?: ListConsoleTenantsParams,) => {
