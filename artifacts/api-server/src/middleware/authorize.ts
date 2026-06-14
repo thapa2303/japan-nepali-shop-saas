@@ -9,10 +9,18 @@ const ROLE_HIERARCHY: Record<AppRole, number> = {
   CUSTOMER: 1,
 };
 
+const ROLE_ALIASES: Record<string, AppRole> = {
+  PLATFORM_SUPER_ADMIN: "PSA",
+};
+
+function normalizeRole(r: string): AppRole {
+  return (ROLE_ALIASES[r] ?? r) as AppRole;
+}
+
 function meetsMinimumRole(userRoles: string[], minimumRole: AppRole): boolean {
   const minLevel = ROLE_HIERARCHY[minimumRole];
   return userRoles.some((r) => {
-    const level = ROLE_HIERARCHY[r as AppRole];
+    const level = ROLE_HIERARCHY[normalizeRole(r)];
     return level !== undefined && level >= minLevel;
   });
 }
@@ -49,7 +57,7 @@ export function authorizeExact(...requiredRoles: AppRole[]) {
     }
 
     const hasRole = requiredRoles.some((role) =>
-      req.user!.roles.includes(role),
+      req.user!.roles.some((r) => normalizeRole(r) === role),
     );
 
     if (!hasRole) {

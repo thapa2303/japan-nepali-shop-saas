@@ -21,7 +21,7 @@ const router: IRouter = Router();
 const AUTH = [authenticate, authorize("TENANT_ADMIN")] as const;
 
 // GET /api/admin/customers - customers who have ordered from this tenant's shops
-router.get("/admin/customers", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/customers", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
   const { q, page = "1", limit = "20" } = req.query as Record<string, string>;
@@ -90,7 +90,7 @@ router.get("/admin/customers", ...AUTH, async (req: Request, res: Response): Pro
 });
 
 // GET /api/admin/overview
-router.get("/admin/overview", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/overview", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const tenantId = req.user!.tenantId;
   if (!tenantId) { res.status(403).json({ error: "No tenant" }); return; }
 

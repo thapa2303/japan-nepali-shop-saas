@@ -1,7 +1,25 @@
 import { Router, type IRouter } from "express";
-import { db, products, shops, shopStoreCategories, eq, and, desc, count, asc } from "@workspace/db";
+import { db, products, productImages, shops, shopStoreCategories, eq, and, desc, count, asc, inArray } from "@workspace/db";
 
 const router: IRouter = Router();
+
+async function attachImages(productRows: typeof products.$inferSelect[]): Promise<(typeof products.$inferSelect & { images: string[] })[]> {
+  if (productRows.length === 0) return productRows.map((p) => ({ ...p, images: [] }));
+  const ids = productRows.map((p) => p.id);
+  const imgs = await db
+    .select({ productId: productImages.productId, url: productImages.url, sortOrder: productImages.sortOrder })
+    .from(productImages)
+    .where(inArray(productImages.productId, ids))
+    .orderBy(asc(productImages.sortOrder));
+
+  const imgMap: Record<string, string[]> = {};
+  for (const img of imgs) {
+    if (!imgMap[img.productId]) imgMap[img.productId] = [];
+    imgMap[img.productId].push(img.url);
+  }
+
+  return productRows.map((p) => ({ ...p, images: imgMap[p.id] ?? [] }));
+}
 
 router.get("/shops/:shopSlug/store-categories", async (req, res): Promise<void> => {
   const [shop] = await db.select().from(shops).where(eq(shops.slug, req.params.shopSlug));
@@ -43,13 +61,16 @@ router.get("/shops/:shopSlug/products", async (req, res): Promise<void> => {
     db.select({ total: count() }).from(products).where(and(eq(products.shopId, shop.id), eq(products.isActive, true))),
   ]);
 
-  res.json({ products: rows, pagination: { page: pageNum, limit: limitNum, total: Number(total), pages: Math.ceil(Number(total) / limitNum) } });
+  const withImages = await attachImages(rows);
+
+  res.json({ products: withImages, pagination: { page: pageNum, limit: limitNum, total: Number(total), pages: Math.ceil(Number(total) / limitNum) } });
 });
 
 router.get("/products/:id", async (req, res): Promise<void> => {
   const [product] = await db.select().from(products).where(and(eq(products.id, req.params.id), eq(products.isActive, true)));
   if (!product) { res.status(404).json({ error: "Product not found" }); return; }
-  res.json(product);
+  const [withImages] = await attachImages([product]);
+  res.json(withImages);
 });
 
 export default router;

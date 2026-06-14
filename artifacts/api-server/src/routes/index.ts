@@ -17,11 +17,13 @@ import tenantAdminRouter from "./tenant-admin.js";
 import uploadRouter from "./upload.js";
 import couponsRouter from "./coupons.js";
 import notificationsRouter from "./notifications.js";
+import categoriesRouter from "./categories.js";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
+router.use(categoriesRouter);
 router.use(shopsRouter);
 router.use(productsRouter);
 router.use(merchantRouter);

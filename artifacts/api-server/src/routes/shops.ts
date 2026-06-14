@@ -15,12 +15,13 @@ import {
 
 const router: IRouter = Router();
 
-// GET /api/shops — public listing with filters: category, prefecture, search
+// GET /api/shops — public listing with filters: category, prefecture, search, featured
 router.get("/shops", async (req, res): Promise<void> => {
   const {
     category,
     prefecture,
     search,
+    featured,
     page = "1",
     limit = "12",
   } = req.query as Record<string, string>;
@@ -34,6 +35,10 @@ router.get("/shops", async (req, res): Promise<void> => {
     conditions.push(
       eq(shops.category, category as typeof shops.$inferSelect["category"]),
     );
+  }
+
+  if (featured === "true") {
+    conditions.push(eq(shops.featured, true));
   }
 
   if (search) {
@@ -59,8 +64,12 @@ router.get("/shops", async (req, res): Promise<void> => {
 
   const [rows, [{ total }]] = await Promise.all([
     db
-      .select()
+      .select({
+        shop: shops,
+        location: shopLocations,
+      })
       .from(shops)
+      .leftJoin(shopLocations, eq(shopLocations.shopId, shops.id))
       .where(where)
       .orderBy(desc(shops.featured), desc(shops.createdAt))
       .limit(limitNum)
@@ -69,7 +78,7 @@ router.get("/shops", async (req, res): Promise<void> => {
   ]);
 
   res.json({
-    shops: rows,
+    shops: rows.map(({ shop, location }) => ({ ...shop, location: location ?? null })),
     pagination: {
       page: pageNum,
       limit: limitNum,

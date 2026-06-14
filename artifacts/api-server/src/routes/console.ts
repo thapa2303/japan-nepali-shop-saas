@@ -28,7 +28,7 @@ const router: IRouter = Router();
 const AUTH = [authenticate, authorize("PSA")] as const;
 
 // GET /api/console/tenants
-router.get("/console/tenants", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/tenants", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const { q, status, page = "1", limit = "20" } = req.query as Record<string, string>;
   const pageNum = Math.max(1, parseInt(page) || 1);
   const limitNum = Math.min(100, parseInt(limit) || 20);
@@ -95,7 +95,7 @@ router.get("/console/tenants", ...AUTH, async (req: Request, res: Response): Pro
 });
 
 // POST /api/console/tenants
-router.post("/console/tenants", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.post("/tenants", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const { tenantName, tenantSlug, ownerName, ownerEmail, ownerPassword, subscriptionTier = "starter" } = req.body as {
     tenantName: string;
     tenantSlug: string;
@@ -142,7 +142,7 @@ router.post("/console/tenants", ...AUTH, async (req: Request, res: Response): Pr
 });
 
 // PUT /api/console/tenants/:id
-router.put("/console/tenants/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.put("/tenants/:id", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const id = String(req.params.id);
   const { status, subscriptionTier } = req.body as { status?: string; subscriptionTier?: string };
 
@@ -170,7 +170,7 @@ router.put("/console/tenants/:id", ...AUTH, async (req: Request, res: Response):
 });
 
 // POST /api/console/tenants/:id/enter
-router.post("/console/tenants/:id/enter", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.post("/tenants/:id/enter", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const id = String(req.params.id);
 
   const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
@@ -203,17 +203,17 @@ router.post("/console/tenants/:id/enter", ...AUTH, async (req: Request, res: Res
 });
 
 // GET /api/console/analytics
-router.get("/console/analytics", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/analytics", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const [tenantCount, orderStats, productCount, customerCount, tierStats] = await Promise.all([
     db.select({
       total: count(),
-      active: sql<number>`count(*) filter (where ${tenants.status} = 'ACTIVE')`,
-      suspended: sql<number>`count(*) filter (where ${tenants.status} = 'SUSPENDED')`,
+      active: sql<number>`count(*) filter (where ${tenants.status} = 'active')`,
+      suspended: sql<number>`count(*) filter (where ${tenants.status} = 'suspended')`,
     }).from(tenants),
     db.select({
       total: count(),
       gmv: sum(orders.total),
-    }).from(orders).where(sql`${orders.status} != 'CANCELLED'`),
+    }).from(orders).where(sql`${orders.status} != 'cancelled'`),
     db.select({ total: count() }).from(products).where(eq(products.isActive, true)),
     db.select({ total: count() }).from(users).where(eq(users.isActive, true)),
     db
@@ -245,7 +245,7 @@ router.get("/console/analytics", ...AUTH, async (req: Request, res: Response): P
 });
 
 // GET /api/console/customers
-router.get("/console/customers", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/customers", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const { q, page = "1", limit = "20" } = req.query as Record<string, string>;
   const pageNum = Math.max(1, parseInt(page) || 1);
   const limitNum = Math.min(100, parseInt(limit) || 20);
@@ -291,7 +291,7 @@ router.get("/console/customers", ...AUTH, async (req: Request, res: Response): P
 });
 
 // GET /api/console/audit-logs
-router.get("/console/audit-logs", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/audit-logs", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const { action, tenantId, page = "1", limit = "50" } = req.query as Record<string, string>;
   const pageNum = Math.max(1, parseInt(page) || 1);
   const limitNum = Math.min(200, parseInt(limit) || 50);
@@ -333,7 +333,7 @@ router.get("/console/audit-logs", ...AUTH, async (req: Request, res: Response): 
 });
 
 // GET /api/console/plans — list all subscription plans from the DB
-router.get("/console/plans", ...AUTH, async (req: Request, res: Response): Promise<void> => {
+router.get("/plans", ...AUTH, async (req: Request, res: Response): Promise<void> => {
   const plans = await getAllPlans();
   res.json({ plans });
 });
