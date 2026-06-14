@@ -4,7 +4,6 @@ declare namespace Express {
       id: string;
       tenantId: string | null;
       roles: string[];
-      tokenVersion: number;
     };
   }
 }

@@ -9,24 +9,31 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
-    }
+    },
+    "./schema": "./src/schema/index.ts",
+    "./zod": "./src/zod.ts"
   },
   "scripts": {
     "build": "tsc --build",
-    "push": "drizzle-kit push",
-    "push-force": "drizzle-kit push --force",
+    "push": "drizzle-kit push --config ./drizzle.config.ts",
+    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
     "studio": "drizzle-kit studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "drizzle-orm": "0.45.2",
+    "bcryptjs": "^2.4.3",
+    "drizzle-orm": "catalog:",
     "drizzle-zod": "0.8.3",
     "pg": "8.20.0",
-    "zod": "3.25.76"
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "catalog:",
     "@types/pg": "8.20.0",
     "drizzle-kit": "0.31.10",
-    "typescript": "5.7.3"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

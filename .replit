@@ -1,5 +1,13 @@
 modules = ["nodejs-24", "python-3.11", "postgresql-16"]
 
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
 [workflows]
 runButton = "Project"
 
@@ -41,7 +49,12 @@ args = "PORT=3001 pnpm --filter @workspace/shopsaas run dev"
 waitForPort = 3001
 
 [agent]
+stack = "PNPM_WORKSPACE"
 expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
 
 [[ports]]
 localPort = 3000

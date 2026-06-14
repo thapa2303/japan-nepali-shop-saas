@@ -1,12 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { db, usersTable, userRolesTable, rolesTable, eq } from "@workspace/db";
+import { db, users, userRoles, roles, eq } from "@workspace/db";
 
 interface JwtPayload {
   sub: string;
   tenantId: string | null;
   roles: string[];
-  tokenVersion: number;
   iat: number;
   exp: number;
 }
@@ -57,31 +56,25 @@ export async function authenticate(
   }
 
   const [user] = await db
-    .select({ id: usersTable.id, tokenVersion: usersTable.tokenVersion, tenantId: usersTable.tenantId, isActive: usersTable.isActive })
-    .from(usersTable)
-    .where(eq(usersTable.id, decoded.sub));
+    .select({ id: users.id, tenantId: users.tenantId, isActive: users.isActive })
+    .from(users)
+    .where(eq(users.id, decoded.sub));
 
   if (!user || !user.isActive) {
     res.status(401).json({ error: "User not found or deactivated" });
     return;
   }
 
-  if (user.tokenVersion !== decoded.tokenVersion) {
-    res.status(401).json({ error: "Token has been invalidated" });
-    return;
-  }
-
   const roleRows = await db
-    .select({ name: rolesTable.name })
-    .from(userRolesTable)
-    .innerJoin(rolesTable, eq(userRolesTable.roleId, rolesTable.id))
-    .where(eq(userRolesTable.userId, user.id));
+    .select({ name: roles.name })
+    .from(userRoles)
+    .innerJoin(roles, eq(userRoles.roleId, roles.id))
+    .where(eq(userRoles.userId, user.id));
 
   req.user = {
     id: user.id,
     tenantId: user.tenantId,
     roles: roleRows.map((r) => r.name),
-    tokenVersion: user.tokenVersion,
   };
 
   next();

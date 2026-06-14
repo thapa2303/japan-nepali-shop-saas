@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import { db, auditLogsTable } from "@workspace/db";
+import { db, auditLogs } from "@workspace/db";
 import { logger } from "./logger.js";
 
 interface AuditParams {
@@ -25,13 +25,13 @@ export async function writeAuditLog(params: AuditParams): Promise<void> {
   const userAgent = req?.headers["user-agent"] ?? null;
 
   try {
-    await db.insert(auditLogsTable).values({
-      userId: effectiveUserId ?? undefined,
+    await db.insert(auditLogs).values({
+      actorUserId: effectiveUserId ?? undefined,
       tenantId: effectiveTenantId ?? undefined,
       action,
-      resource,
-      resourceId: resourceId ?? undefined,
-      metadata: metadata ? JSON.stringify(metadata) : "{}",
+      targetType: resource,
+      targetId: resourceId ?? undefined,
+      newValue: metadata ?? undefined,
       ipAddress: ipAddress ?? undefined,
       userAgent: userAgent ?? undefined,
     });

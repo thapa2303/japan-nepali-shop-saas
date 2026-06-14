@@ -1,70 +1,80 @@
 import {
   pgTable,
   uuid,
+  varchar,
   text,
+  boolean,
   integer,
-  numeric,
   timestamp,
+  index,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
-import { productStatusEnum } from "./enums.js";
-import { shopsTable } from "./shops.js";
+import { shops } from "./shops.js";
+import { tenants } from "./identity.js";
 
-export const categoriesTable = pgTable("categories", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  description: text("description"),
-  imageUrl: text("image_url"),
-  parentId: uuid("parent_id"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const products = pgTable(
+  "products",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    shopId: uuid("shop_id")
+      .notNull()
+      .references(() => shops.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 255 }).notNull(),
+    nameNepali: varchar("name_nepali", { length: 255 }),
+    description: text("description").notNull(),
+    price: integer("price").notNull(),
+    compareAtPrice: integer("compare_at_price"),
+    category: varchar("category", { length: 100 }).notNull(),
+    browseCategory: varchar("browse_category", { length: 100 }),
+    storeCategory: varchar("store_category", { length: 100 }),
+    inStock: boolean("in_stock").notNull().default(true),
+    stockCount: integer("stock_count"),
+    unit: varchar("unit", { length: 50 }),
+    featured: boolean("featured").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("products_tenant_id_idx").on(t.tenantId),
+    index("products_shop_id_idx").on(t.shopId),
+    index("products_category_idx").on(t.category),
+    index("products_featured_idx").on(t.featured),
+    index("products_in_stock_idx").on(t.inStock),
+  ]
+);
 
-export const productsTable = pgTable("products", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  shopId: uuid("shop_id")
-    .notNull()
-    .references(() => shopsTable.id, { onDelete: "cascade" }),
-  categoryId: uuid("category_id").references(() => categoriesTable.id, {
-    onDelete: "set null",
-  }),
-  name: text("name").notNull(),
-  slug: text("slug").notNull(),
-  description: text("description"),
-  price: numeric("price", { precision: 12, scale: 2 }).notNull(),
-  compareAtPrice: numeric("compare_at_price", { precision: 12, scale: 2 }),
-  sku: text("sku"),
-  stock: integer("stock").notNull().default(0),
-  imageUrls: text("image_urls").array(),
-  tags: text("tags").array(),
-  status: productStatusEnum("status").notNull().default("DRAFT"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const productImages = pgTable(
+  "product_images",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    altText: varchar("alt_text", { length: 255 }),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [
+    index("product_images_product_id_idx").on(t.productId),
+  ]
+);
 
-export const insertProductSchema = createInsertSchema(productsTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-export const insertCategorySchema = createInsertSchema(categoriesTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type Product = typeof productsTable.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Category = typeof categoriesTable.$inferSelect;
+export const productVariants = pgTable(
+  "product_variants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 100 }).notNull(),
+    price: integer("price").notNull(),
+    inStock: boolean("in_stock").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [
+    index("product_variants_product_id_idx").on(t.productId),
+  ]
+);

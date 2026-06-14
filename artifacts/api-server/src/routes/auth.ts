@@ -2,12 +2,11 @@ import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import {
   db,
-  usersTable,
-  tenantsTable,
-  rolesTable,
-  userRolesTable,
+  users,
+  tenants,
+  roles,
+  userRoles,
   eq,
-  sql,
 } from "@workspace/db";
 import { RegisterBody, LoginBody, LoginResponse, AuthUserResponse } from "@workspace/api-zod";
 import { authenticate } from "../middleware/authenticate.js";
@@ -26,10 +25,10 @@ const COOKIE_OPTIONS = {
 
 async function getUserRoles(userId: string): Promise<string[]> {
   const rows = await db
-    .select({ name: rolesTable.name })
-    .from(userRolesTable)
-    .innerJoin(rolesTable, eq(userRolesTable.roleId, rolesTable.id))
-    .where(eq(userRolesTable.userId, userId));
+    .select({ name: roles.name })
+    .from(userRoles)
+    .innerJoin(roles, eq(userRoles.roleId, roles.id))
+    .where(eq(userRoles.userId, userId));
   return rows.map((r) => r.name);
 }
 
@@ -43,9 +42,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const { email, password, displayName, tenantName, tenantSlug } = parsed.data;
 
   const [existingUser] = await db
-    .select({ id: usersTable.id })
-    .from(usersTable)
-    .where(eq(usersTable.email, email.toLowerCase()));
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email.toLowerCase()));
 
   if (existingUser) {
     res.status(409).json({ error: "Email already registered" });
@@ -53,9 +52,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }
 
   const [existingTenant] = await db
-    .select({ id: tenantsTable.id })
-    .from(tenantsTable)
-    .where(eq(tenantsTable.slug, tenantSlug));
+    .select({ id: tenants.id })
+    .from(tenants)
+    .where(eq(tenants.slug, tenantSlug));
 
   if (existingTenant) {
     res.status(409).json({ error: "Tenant slug already taken" });
@@ -65,51 +64,50 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const passwordHash = await bcrypt.hash(password, 12);
 
   const [tenant] = await db
-    .insert(tenantsTable)
+    .insert(tenants)
     .values({ name: tenantName, slug: tenantSlug })
     .returning();
 
   const [user] = await db
-    .insert(usersTable)
+    .insert(users)
     .values({
       email: email.toLowerCase(),
       passwordHash,
-      displayName,
+      name: displayName,
       tenantId: tenant.id,
     })
     .returning();
 
   const [merchantRole] = await db
-    .select({ id: rolesTable.id })
-    .from(rolesTable)
-    .where(eq(rolesTable.name, "MERCHANT"));
+    .select({ id: roles.id })
+    .from(roles)
+    .where(eq(roles.name, "MERCHANT"));
 
   if (merchantRole) {
-    await db.insert(userRolesTable).values({
+    await db.insert(userRoles).values({
       userId: user.id,
       roleId: merchantRole.id,
     });
   }
 
   const [tenantAdminRole] = await db
-    .select({ id: rolesTable.id })
-    .from(rolesTable)
-    .where(eq(rolesTable.name, "TENANT_ADMIN"));
+    .select({ id: roles.id })
+    .from(roles)
+    .where(eq(roles.name, "TENANT_ADMIN"));
 
   if (tenantAdminRole) {
-    await db.insert(userRolesTable).values({
+    await db.insert(userRoles).values({
       userId: user.id,
       roleId: tenantAdminRole.id,
     });
   }
 
-  const roles = await getUserRoles(user.id);
+  const userRoleNames = await getUserRoles(user.id);
 
   const token = signToken({
     sub: user.id,
     tenantId: user.tenantId,
-    roles,
-    tokenVersion: user.tokenVersion,
+    roles: userRoleNames,
   });
 
   res.cookie("token", token, COOKIE_OPTIONS);
@@ -128,9 +126,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const responseUser = AuthUserResponse.parse({
     id: user.id,
     email: user.email,
-    displayName: user.displayName,
+    displayName: user.name,
     tenantId: user.tenantId,
-    roles,
+    roles: userRoleNames,
   });
 
   res.status(201).json(
@@ -149,8 +147,8 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   const [user] = await db
     .select()
-    .from(usersTable)
-    .where(eq(usersTable.email, email.toLowerCase()));
+    .from(users)
+    .where(eq(users.email, email.toLowerCase()));
 
   if (!user || !user.isActive) {
     res.status(401).json({ error: "Invalid email or password" });
@@ -171,13 +169,12 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const roles = await getUserRoles(user.id);
+  const userRoleNames = await getUserRoles(user.id);
 
   const token = signToken({
     sub: user.id,
     tenantId: user.tenantId,
-    roles,
-    tokenVersion: user.tokenVersion,
+    roles: userRoleNames,
   });
 
   res.cookie("token", token, COOKIE_OPTIONS);
@@ -196,20 +193,15 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const responseUser = AuthUserResponse.parse({
     id: user.id,
     email: user.email,
-    displayName: user.displayName,
+    displayName: user.name,
     tenantId: user.tenantId,
-    roles,
+    roles: userRoleNames,
   });
 
   res.json(LoginResponse.parse({ user: responseUser, token }));
 });
 
 router.post("/auth/logout", authenticate, async (req, res): Promise<void> => {
-  await db
-    .update(usersTable)
-    .set({ tokenVersion: sql`${usersTable.tokenVersion} + 1` })
-    .where(eq(usersTable.id, req.user!.id));
-
   await writeAuditLog({
     req,
     action: "logout",
@@ -226,28 +218,28 @@ router.post("/auth/logout", authenticate, async (req, res): Promise<void> => {
 router.get("/auth/me", authenticate, async (req, res): Promise<void> => {
   const [user] = await db
     .select({
-      id: usersTable.id,
-      email: usersTable.email,
-      displayName: usersTable.displayName,
-      tenantId: usersTable.tenantId,
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      tenantId: users.tenantId,
     })
-    .from(usersTable)
-    .where(eq(usersTable.id, req.user!.id));
+    .from(users)
+    .where(eq(users.id, req.user!.id));
 
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
   }
 
-  const roles = await getUserRoles(user.id);
+  const userRoleNames = await getUserRoles(user.id);
 
   res.json(
     AuthUserResponse.parse({
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      displayName: user.name,
       tenantId: user.tenantId,
-      roles,
+      roles: userRoleNames,
     }),
   );
 });

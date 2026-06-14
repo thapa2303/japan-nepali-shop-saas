@@ -43,3 +43,6 @@ export const ErrorResponse = z.object({
   error: z.string(),
 });
 export type ErrorResponse = z.infer<typeof ErrorResponse>;
+
+export * from "./generated/api.js";
+export * from "./generated/types/index.js";

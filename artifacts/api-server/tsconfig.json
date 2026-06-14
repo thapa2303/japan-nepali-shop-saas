@@ -1,14 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true,
-    "composite": false,
-    "declaration": false,
-    "declarationMap": false,
-    "emitDeclarationOnly": false,
+    "incremental": true,
+    "composite": true,
     "tsBuildInfoFile": ".tsbuildinfo",
-    "module": "ESNext",
-    "moduleResolution": "bundler"
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"]
   },
   "include": ["src", "*.ts"],
   "references": [
