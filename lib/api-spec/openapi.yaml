@@ -427,6 +427,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /orders/checkout:
+    post:
+      operationId: checkout
+      tags: [orders]
+      summary: Place an order, optionally applying a coupon atomically
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutBody"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutResponse"
+        "400":
+          description: Invalid coupon or bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ─── COUPONS ────────────────────────────────────────────────────────────────
 
   /coupons/validate:
@@ -449,49 +482,6 @@ paths:
                 $ref: "#/components/schemas/ValidateCouponResponse"
         "400":
           description: Coupon invalid or conditions not met
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: Coupon not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /coupons/redeem:
-    post:
-      operationId: redeemCoupon
-      tags: [coupons]
-      summary: Increment usedCount on a coupon after an order is placed
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                couponId:
-                  type: string
-              required: [couponId]
-      responses:
-        "200":
-          description: Coupon redeemed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  usedCount:
-                    type: integer
-                required: [success, usedCount]
-        "400":
-          description: Coupon cannot be redeemed
           content:
             application/json:
               schema:
@@ -1972,6 +1962,49 @@ components:
         expiresAt:
           type: string
       required: [code, discountType, discountValue]
+
+    CheckoutBody:
+      type: object
+      properties:
+        couponId:
+          type: string
+        subtotal:
+          type: number
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        deliveryAddress:
+          type: string
+        paymentMethod:
+          type: string
+      required: []
+
+    CheckoutResponse:
+      type: object
+      properties:
+        order:
+          type: object
+          properties:
+            id:
+              type: string
+            orderNumber:
+              type: string
+            total:
+              type: integer
+            subtotal:
+              type: integer
+            status:
+              type: string
+            createdAt:
+              type: string
+          required: [id, orderNumber, total, subtotal, status]
+        discountAmount:
+          type: integer
+        couponId:
+          type: string
+          nullable: true
+      required: [order, discountAmount]
 
     ValidateCouponBody:
       type: object

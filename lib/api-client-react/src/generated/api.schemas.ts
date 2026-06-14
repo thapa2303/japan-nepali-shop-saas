@@ -375,6 +375,30 @@ export interface CreateCouponBody {
   expiresAt?: string;
 }
 
+export interface CheckoutBody {
+  couponId?: string;
+  subtotal?: number;
+  customerName?: string;
+  customerPhone?: string;
+  deliveryAddress?: string;
+  paymentMethod?: string;
+}
+
+export type CheckoutResponseOrder = {
+  id: string;
+  orderNumber: string;
+  total: number;
+  subtotal: number;
+  status: string;
+  createdAt?: string;
+};
+
+export interface CheckoutResponse {
+  order: CheckoutResponseOrder;
+  discountAmount: number;
+  couponId?: string | null;
+}
+
 export interface ValidateCouponBody {
   code: string;
   shopId?: string;
@@ -466,15 +490,6 @@ export type RemoveCartItem200 = {
 
 export type ListOrders200 = {
   orders: Order[];
-};
-
-export type RedeemCouponBody = {
-  couponId: string;
-};
-
-export type RedeemCoupon200 = {
-  success: boolean;
-  usedCount: number;
 };
 
 export type ListDashboardProducts200 = {

@@ -26,6 +26,8 @@ import type {
   AuthUser,
   CartItem,
   CartItemInput,
+  CheckoutBody,
+  CheckoutResponse,
   ConsoleAnalytics,
   Coupon,
   CreateConsoleTenant201,
@@ -70,8 +72,6 @@ import type {
   OrderDetail,
   OrderStatusInput,
   Product,
-  RedeemCoupon200,
-  RedeemCouponBody,
   RegisterInput,
   RemoveCartItem200,
   Search200,
@@ -1326,6 +1326,76 @@ export function useGetOrder<TData = Awaited<ReturnType<typeof getOrder>>, TError
 
 
 
+export const getCheckoutUrl = () => {
+
+
+
+
+  return `/api/orders/checkout`
+}
+
+/**
+ * @summary Place an order, optionally applying a coupon atomically
+ */
+export const checkout = async (checkoutBody: CheckoutBody, options?: RequestInit): Promise<CheckoutResponse> => {
+
+  return customFetch<CheckoutResponse>(getCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(checkoutBody)
+  }
+);}
+
+
+
+
+export const getCheckoutMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,{data: BodyType<CheckoutBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,{data: BodyType<CheckoutBody>}, TContext> => {
+
+const mutationKey = ['checkout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkout>>, {data: BodyType<CheckoutBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  checkout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof checkout>>>
+    export type CheckoutMutationBody = BodyType<CheckoutBody>
+    export type CheckoutMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Place an order, optionally applying a coupon atomically
+ */
+export const useCheckout = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,{data: BodyType<CheckoutBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof checkout>>,
+        TError,
+        {data: BodyType<CheckoutBody>},
+        TContext
+      > => {
+      return useMutation(getCheckoutMutationOptions(options));
+    }
+
 export const getValidateCouponUrl = () => {
 
 
@@ -1394,76 +1464,6 @@ export const useValidateCoupon = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getValidateCouponMutationOptions(options));
-    }
-
-export const getRedeemCouponUrl = () => {
-
-
-
-
-  return `/api/coupons/redeem`
-}
-
-/**
- * @summary Increment usedCount on a coupon after an order is placed
- */
-export const redeemCoupon = async (redeemCouponBody: RedeemCouponBody, options?: RequestInit): Promise<RedeemCoupon200> => {
-
-  return customFetch<RedeemCoupon200>(getRedeemCouponUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(redeemCouponBody)
-  }
-);}
-
-
-
-
-export const getRedeemCouponMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof redeemCoupon>>, TError,{data: BodyType<RedeemCouponBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof redeemCoupon>>, TError,{data: BodyType<RedeemCouponBody>}, TContext> => {
-
-const mutationKey = ['redeemCoupon'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof redeemCoupon>>, {data: BodyType<RedeemCouponBody>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  redeemCoupon(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RedeemCouponMutationResult = NonNullable<Awaited<ReturnType<typeof redeemCoupon>>>
-    export type RedeemCouponMutationBody = BodyType<RedeemCouponBody>
-    export type RedeemCouponMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Increment usedCount on a coupon after an order is placed
- */
-export const useRedeemCoupon = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof redeemCoupon>>, TError,{data: BodyType<RedeemCouponBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof redeemCoupon>>,
-        TError,
-        {data: BodyType<RedeemCouponBody>},
-        TContext
-      > => {
-      return useMutation(getRedeemCouponMutationOptions(options));
     }
 
 export const getGetAccountUrl = () => {

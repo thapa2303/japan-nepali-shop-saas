@@ -4,7 +4,7 @@ import {
   useGetCart,
   useRemoveCartItem,
   useValidateCoupon,
-  useRedeemCoupon,
+  useCheckout,
   getGetCartQueryKey,
   type ValidateCouponResponse,
 } from "@workspace/api-client-react";
@@ -21,7 +21,7 @@ export default function CartPage() {
   const { data: cart, isLoading } = useGetCart();
   const removeItem = useRemoveCartItem();
   const validateCoupon = useValidateCoupon();
-  const redeemCoupon = useRedeemCoupon();
+  const checkoutMutation = useCheckout();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -79,21 +79,28 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    if (appliedCoupon) {
-      try {
-        await redeemCoupon.mutateAsync({ data: { couponId: appliedCoupon.coupon.id } });
-      } catch {
-        console.error("[cart] failed to redeem coupon");
-      }
+    try {
+      const result = await checkoutMutation.mutateAsync({
+        data: {
+          subtotal,
+          ...(appliedCoupon ? { couponId: appliedCoupon.coupon.id } : {}),
+        },
+      });
+      toast({
+        title: "Order placed!",
+        description: result.discountAmount > 0
+          ? `Order #${result.order.orderNumber} — you saved ¥${result.discountAmount.toLocaleString()}.`
+          : `Order #${result.order.orderNumber} has been placed successfully.`,
+      });
+      setAppliedCoupon(null);
+      setCouponCode("");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: string }).message)
+          : "Checkout failed. Please try again.";
+      toast({ title: "Checkout failed", description: msg, variant: "destructive" });
     }
-    toast({
-      title: "Order placed!",
-      description: appliedCoupon
-        ? `You saved ¥${discountAmount.toLocaleString()} with coupon ${appliedCoupon.coupon.code}.`
-        : "Your order has been successfully placed.",
-    });
-    setAppliedCoupon(null);
-    setCouponCode("");
   };
 
   return (
@@ -233,11 +240,7 @@ export default function CartPage() {
                   <div className="border-t pt-4">
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span
-                        className={
-                          appliedCoupon ? "text-emerald-700 dark:text-emerald-400" : ""
-                        }
-                      >
+                      <span className={appliedCoupon ? "text-emerald-700 dark:text-emerald-400" : ""}>
                         ¥{total.toLocaleString()}
                       </span>
                     </div>
@@ -252,9 +255,9 @@ export default function CartPage() {
                     className="w-full"
                     size="lg"
                     onClick={handleCheckout}
-                    disabled={redeemCoupon.isPending}
+                    disabled={checkoutMutation.isPending}
                   >
-                    {redeemCoupon.isPending ? (
+                    {checkoutMutation.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Placing order…

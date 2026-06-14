@@ -369,6 +369,32 @@ export const GetOrderResponse = zod.object({
 
 
 /**
+ * @summary Place an order, optionally applying a coupon atomically
+ */
+export const CheckoutBody = zod.object({
+  "couponId": zod.string().optional(),
+  "subtotal": zod.number().optional(),
+  "customerName": zod.string().optional(),
+  "customerPhone": zod.string().optional(),
+  "deliveryAddress": zod.string().optional(),
+  "paymentMethod": zod.string().optional()
+})
+
+export const CheckoutResponse = zod.object({
+  "order": zod.object({
+  "id": zod.string(),
+  "orderNumber": zod.string(),
+  "total": zod.number(),
+  "subtotal": zod.number(),
+  "status": zod.string(),
+  "createdAt": zod.string().optional()
+}),
+  "discountAmount": zod.number(),
+  "couponId": zod.string().nullish()
+})
+
+
+/**
  * @summary Validate a coupon code for a shop
  */
 export const ValidateCouponBody = zod.object({
@@ -388,19 +414,6 @@ export const ValidateCouponResponse = zod.object({
 }),
   "discountAmount": zod.number(),
   "finalAmount": zod.number()
-})
-
-
-/**
- * @summary Increment usedCount on a coupon after an order is placed
- */
-export const RedeemCouponBody = zod.object({
-  "couponId": zod.string()
-})
-
-export const RedeemCouponResponse = zod.object({
-  "success": zod.boolean(),
-  "usedCount": zod.number()
 })
 
 
