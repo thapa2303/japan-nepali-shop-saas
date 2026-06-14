@@ -391,12 +391,18 @@ function CouponTable({
               coupons.map((coupon) => (
                 <TableRow key={coupon.id} className={!coupon.isActive ? "opacity-60" : ""}>
                   <TableCell>
-                    <Switch
-                      checked={coupon.isActive}
-                      onCheckedChange={() => onToggleActive(coupon.id, coupon.isActive)}
-                      disabled={updatePending}
-                      aria-label={coupon.isActive ? "Pause coupon" : "Activate coupon"}
-                    />
+                    {coupon.maxUses != null && coupon.usedCount >= coupon.maxUses ? (
+                      <Badge variant="outline" className="text-xs font-medium text-orange-600 border-orange-300 bg-orange-50 whitespace-nowrap">
+                        Limit reached
+                      </Badge>
+                    ) : (
+                      <Switch
+                        checked={coupon.isActive}
+                        onCheckedChange={() => onToggleActive(coupon.id, coupon.isActive)}
+                        disabled={updatePending}
+                        aria-label={coupon.isActive ? "Pause coupon" : "Activate coupon"}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>
                     <span className="font-mono font-semibold tracking-wider">{coupon.code}</span>

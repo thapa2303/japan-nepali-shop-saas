@@ -272,11 +272,29 @@ async function handleCreateOrder(req: Request, res: Response): Promise<void> {
           .returning();
 
         // Atomically increment coupon usedCount using SQL expression (safe under concurrency)
+        // Then auto-pause the coupon if usedCount has now reached maxUses.
         if (resolvedCouponId) {
           await tx
             .update(coupons)
             .set({ usedCount: sql`${coupons.usedCount} + 1` })
             .where(eq(coupons.id, resolvedCouponId));
+
+          // Re-check after increment: if the coupon had a maxUses and we just hit it, pause it.
+          const [updatedCoupon] = await tx
+            .select({ usedCount: coupons.usedCount, maxUses: coupons.maxUses })
+            .from(coupons)
+            .where(eq(coupons.id, resolvedCouponId))
+            .limit(1);
+          if (
+            updatedCoupon &&
+            updatedCoupon.maxUses != null &&
+            updatedCoupon.usedCount >= updatedCoupon.maxUses
+          ) {
+            await tx
+              .update(coupons)
+              .set({ isActive: false })
+              .where(eq(coupons.id, resolvedCouponId));
+          }
         }
 
         // Create order_items from cart line items
