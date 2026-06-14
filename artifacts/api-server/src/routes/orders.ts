@@ -6,6 +6,7 @@ import {
   coupons,
   users,
   shops,
+  products,
   carts,
   cartItems,
   eq,
@@ -75,18 +76,28 @@ router.post(
       paymentMethod?: "cod" | "paypay" | "credit-card" | "bank-transfer";
     };
 
-    // Validate subtotal
+    // Validate subtotal (used as fallback only — server-side cart items take priority)
     if (typeof rawSubtotal !== "number" || rawSubtotal < 0 || rawSubtotal > 10_000_000) {
       res
         .status(400)
         .json({ error: "subtotal must be a non-negative number up to ¥10,000,000" });
       return;
     }
-    const subtotal = Math.round(rawSubtotal);
+    let subtotal = Math.round(rawSubtotal);
 
-    // ── Resolve shopId ────────────────────────────────────────────────────────
+    // ── Resolve shopId and fetch cart items ───────────────────────────────────
     // Priority 1: derive from user's DB cart items (authoritative, single-shop invariant)
     let resolvedShopId: string | null = null;
+
+    type CartLineItem = {
+      id: string;
+      productId: string;
+      quantity: number;
+      price: number;
+      name: string;
+    };
+    let cartLineItems: CartLineItem[] = [];
+    let cartId: string | null = null;
 
     const userCart = await db
       .select({ id: carts.id })
@@ -95,19 +106,38 @@ router.post(
       .limit(1);
 
     if (userCart.length > 0) {
-      const cartShops = await db
-        .selectDistinct({ shopId: cartItems.shopId })
+      cartId = userCart[0].id;
+      const cartRows = await db
+        .select({
+          id: cartItems.id,
+          shopId: cartItems.shopId,
+          productId: cartItems.productId,
+          quantity: cartItems.quantity,
+          price: products.price,
+          name: products.name,
+        })
         .from(cartItems)
-        .where(eq(cartItems.cartId, userCart[0].id));
+        .innerJoin(products, eq(cartItems.productId, products.id))
+        .where(eq(cartItems.cartId, cartId));
 
-      if (cartShops.length > 1) {
+      const shopIds = [...new Set(cartRows.map((r) => r.shopId))];
+      if (shopIds.length > 1) {
         res.status(400).json({
           error: "Your cart contains items from multiple shops. Please checkout one shop at a time.",
         });
         return;
       }
-      if (cartShops.length === 1) {
-        resolvedShopId = cartShops[0].shopId;
+      if (shopIds.length === 1) {
+        resolvedShopId = shopIds[0];
+        cartLineItems = cartRows.map((r) => ({
+          id: r.id,
+          productId: r.productId,
+          quantity: r.quantity,
+          price: r.price,
+          name: r.name,
+        }));
+        // Compute server-side subtotal from actual cart prices
+        subtotal = cartLineItems.reduce((s, item) => s + item.price * item.quantity, 0);
       }
     }
 
@@ -251,6 +281,26 @@ router.post(
             .update(coupons)
             .set({ usedCount: sql`${coupons.usedCount} + 1` })
             .where(eq(coupons.id, resolvedCouponId));
+        }
+
+        // Create order_items from cart line items
+        if (cartLineItems.length > 0) {
+          await tx.insert(orderItems).values(
+            cartLineItems.map((item) => ({
+              orderId: newOrder.id,
+              productId: item.productId,
+              productName: item.name,
+              variantName: null,
+              quantity: item.quantity,
+              price: item.price,
+              subtotal: item.price * item.quantity,
+            }))
+          );
+        }
+
+        // Clear the cart after successful order
+        if (cartId) {
+          await tx.delete(cartItems).where(eq(cartItems.cartId, cartId));
         }
 
         res.status(201).json({

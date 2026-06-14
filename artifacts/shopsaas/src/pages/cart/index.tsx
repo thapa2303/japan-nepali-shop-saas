@@ -4,7 +4,6 @@ import {
   useGetCart,
   useRemoveCartItem,
   useValidateCoupon,
-  useCheckout,
   useListShops,
   getGetCartQueryKey,
   type ValidateCouponResponse,
@@ -20,19 +19,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, ShoppingBag, Tag, X, Loader2, Store } from "lucide-react";
+import { Trash2, ShoppingBag, Tag, X, Loader2, Store, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+
+const CHECKOUT_CONTEXT_KEY = "shopsaas:checkout-context";
 
 export default function CartPage() {
   const { data: cart, isLoading } = useGetCart();
   const { data: shopsData } = useListShops();
   const removeItem = useRemoveCartItem();
   const validateCoupon = useValidateCoupon();
-  const checkoutMutation = useCheckout();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const [selectedShopId, setSelectedShopId] = useState<string>("");
   const [couponCode, setCouponCode] = useState("");
@@ -111,7 +112,7 @@ export default function CartPage() {
     toast({ title: "Coupon removed" });
   };
 
-  const handleCheckout = async () => {
+  const handleProceedToCheckout = () => {
     if (!activeShopId) {
       toast({
         title: "Select a shop",
@@ -120,30 +121,16 @@ export default function CartPage() {
       });
       return;
     }
-    try {
-      const result = await checkoutMutation.mutateAsync({
-        data: {
-          shopId: activeShopId,
-          subtotal,
-          ...(appliedCoupon ? { couponId: appliedCoupon.coupon.id } : {}),
-        },
-      });
-      toast({
-        title: "Order placed!",
-        description:
-          result.discountAmount > 0
-            ? `Order #${result.order.orderNumber} — you saved ¥${result.discountAmount.toLocaleString()}.`
-            : `Order #${result.order.orderNumber} has been placed successfully.`,
-      });
-      setAppliedCoupon(null);
-      setCouponCode("");
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "message" in err
-          ? String((err as { message: string }).message)
-          : "Checkout failed. Please try again.";
-      toast({ title: "Checkout failed", description: msg, variant: "destructive" });
-    }
+    sessionStorage.setItem(
+      CHECKOUT_CONTEXT_KEY,
+      JSON.stringify({
+        shopId: activeShopId,
+        couponId: appliedCoupon?.coupon.id ?? undefined,
+        appliedCoupon: appliedCoupon ?? null,
+        discountAmount,
+      })
+    );
+    navigate("/checkout");
   };
 
   return (
@@ -332,17 +319,11 @@ export default function CartPage() {
                   <Button
                     className="w-full"
                     size="lg"
-                    onClick={handleCheckout}
-                    disabled={checkoutMutation.isPending || !activeShopId}
+                    onClick={handleProceedToCheckout}
+                    disabled={!activeShopId}
                   >
-                    {checkoutMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Placing order…
-                      </>
-                    ) : (
-                      "Proceed to Checkout"
-                    )}
+                    Proceed to Checkout
+                    <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
 
                   {!activeShopId && (

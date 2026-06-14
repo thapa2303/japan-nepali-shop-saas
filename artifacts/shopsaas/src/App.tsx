@@ -15,6 +15,7 @@ import ShopsPage from "@/pages/shops";
 import ShopDetailPage from "@/pages/shops/detail";
 import ProductDetailPage from "@/pages/products/detail";
 import CartPage from "@/pages/cart";
+import CheckoutPage from "@/pages/checkout";
 import SearchPage from "@/pages/search";
 import AccountPage from "@/pages/account";
 import OrdersPage from "@/pages/orders";
@@ -64,6 +65,11 @@ function Router() {
       <Route path="/cart">
         <ProtectedRoute>
           <CartPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/checkout">
+        <ProtectedRoute>
+          <CheckoutPage />
         </ProtectedRoute>
       </Route>
       <Route path="/account">
